@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Redirect based on user type
                 if ($user['is_admin'] == 1) {
-                    header("Location: admin/dashboard.php");
+                    header("Location: admin/index.php");
                 } else {
                     header("Location: dashboard.php");
                 }
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Check if user is already logged in
 if (isset($_SESSION['user_id'])) {
     if ($_SESSION['is_admin'] == 1) {
-        header("Location: admin/dashboard.php");
+        header("Location: admin/index.php");
     } else {
         header("Location: dashboard.php");
     }

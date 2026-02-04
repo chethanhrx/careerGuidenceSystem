@@ -307,7 +307,7 @@ if (!$test_submitted) {
           <a href="dashboard.php">Dashboard</a>
           <a href="profile-setup.php">Profile</a>
           <a href="assessment.php" class="active">Assessment</a>
-          <a href="careers.php">Careers</a>
+          <a href="career-details.php">Careers</a>
         </nav>
       </div>
       <div class="nav-actions">
@@ -430,7 +430,7 @@ if (!$test_submitted) {
       <?php endif; ?>
 
       <div class="cta-wrap">
-        <a href="careers.php" class="btn btn-primary">Explore All Careers</a>
+        <a href="career-details.php" class="btn btn-primary">Explore All Careers</a>
         <button id="retakeTest" class="btn btn-outline" style="margin-top: var(--space-md);">Retake Assessment</button>
         <a href="dashboard.php" class="btn btn-ghost" style="margin-top: var(--space-sm); display: block;">Return to Dashboard</a>
       </div>
