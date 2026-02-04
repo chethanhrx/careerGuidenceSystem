@@ -50,9 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['logged_in'] = true;
                 $_SESSION['login_time'] = time();
                 
-                // REMOVED: Update last_login (column doesn't exist)
-                // $update_sql = "UPDATE users SET last_login = NOW() WHERE id = '{$user['id']}'";
-                // mysqli_query($conn, $update_sql);
+                // Update last login
+                $update_sql = "UPDATE users SET last_login = NOW() WHERE id = '{$user['id']}'";
+                mysqli_query($conn, $update_sql);
                 
                 // Redirect to admin dashboard
                 header("Location: index.php");
