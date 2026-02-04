@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Questions | CareerGuide Admin</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .admin-header { padding: var(--space-lg); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md); }
+    .admin-main { padding: var(--space-lg); }
+    .question-list { display: grid; gap: var(--space-md); }
+    .question-item { padding: var(--space-lg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+    .question-item h3 { font-size: var(--text-base); margin-bottom: var(--space-xs); }
+    .question-item .meta { font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: var(--space-sm); }
+    .question-item .options { font-size: var(--text-sm); color: var(--color-text-secondary); }
+    .question-actions { margin-top: var(--space-md); display: flex; gap: var(--space-sm); }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: var(--space-lg); opacity: 0; visibility: hidden; transition: opacity var(--transition-base), visibility var(--transition-base); }
+    .modal.open { opacity: 1; visibility: visible; }
+    .modal-content { background: var(--color-bg-card); border-radius: var(--radius-xl); padding: var(--space-xl); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+    .modal-content h2 { margin-bottom: var(--space-lg); }
+    .option-row { display: flex; gap: var(--space-sm); margin-bottom: var(--space-sm); align-items: center; }
+    .option-row input[type="text"] { flex: 1; }
+    .modal-actions { margin-top: var(--space-lg); display: flex; gap: var(--space-md); justify-content: flex-end; }
+    .page-loader { position: fixed; inset: 0; background: var(--color-bg); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease, visibility 0.4s ease; }
+    .page-loader.hidden { opacity: 0; visibility: hidden; }
+  </style>
+</head>
+<body class="has-sidebar-admin">
+  <div class="page-loader" id="pageLoader">
+    <div class="skeleton" style="width: 90%; max-width: 500px; height: 180px; border-radius: var(--radius-xl);"></div>
+  </div>
+
+  <aside class="sidebar sidebar-admin" id="sidebar" style="display: none;">
+    <div class="sidebar-brand">Admin</div>
+    <ul class="sidebar-nav">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="careers.html">Careers</a></li>
+      <li><a href="questions.html" class="active">Questions</a></li>
+      <li><a href="users.html">Users</a></li>
+    </ul>
+  </aside>
+
+  <div class="main-with-sidebar">
+  <header class="site-header">
+    <div class="container">
+      <div class="header-left">
+        <a href="dashboard.html" class="logo">Career<span>Guide</span> Admin</a>
+        <nav class="nav-links">
+          <a href="dashboard.html">Dashboard</a>
+          <a href="careers.html">Careers</a>
+          <a href="questions.html" class="active">Questions</a>
+          <a href="users.html">Users</a>
+        </nav>
+      </div>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg class="icon-moon sr-only" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <a href="dashboard.html" class="btn btn-ghost">Dashboard</a>
+        <a href="careers.html" class="btn btn-ghost">Careers</a>
+        <a href="users.html" class="btn btn-ghost">Users</a>
+        <button class="hamburger" id="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+  <nav class="mobile-nav" id="mobileNav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="careers.html">Careers</a>
+    <a href="questions.html" class="active">Questions</a>
+    <a href="users.html">Users</a>
+    <a href="../index.html">View site</a>
+    <a href="login.html">Logout</a>
+  </nav>
+
+  <div class="admin-header">
+    <h1>Manage questions</h1>
+    <button type="button" class="btn btn-primary" id="addQuestionBtn">Add question</button>
+  </div>
+
+  <main class="admin-main">
+    <div class="question-list" id="questionList">
+      <!-- Filled by JS -->
+    </div>
+  </main>
+  </div>
+
+  <div class="modal" id="questionModal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Add question</h2>
+      <form id="questionForm">
+        <input type="hidden" id="questionId" name="id">
+        <div class="form-group">
+          <label class="form-label" for="questionText">Question text</label>
+          <input type="text" id="questionText" name="text" class="form-input" placeholder="Enter question" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="questionCategory">Category</label>
+          <select id="questionCategory" name="category" class="form-select" required>
+            <option value="aptitude">Aptitude</option>
+            <option value="interest">Interest</option>
+            <option value="skill">Skill</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Options (one per line or use fields)</label>
+          <div id="optionsContainer">
+            <div class="option-row"><input type="text" class="form-input option-input" placeholder="Option 1"></div>
+            <div class="option-row"><input type="text" class="form-input option-input" placeholder="Option 2"></div>
+            <div class="option-row"><input type="text" class="form-input option-input" placeholder="Option 3"></div>
+            <div class="option-row"><input type="text" class="form-input option-input" placeholder="Option 4"></div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="modalCancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var theme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+      var btn = document.getElementById('themeToggle');
+      var sun = btn && btn.querySelector('.icon-sun');
+      var moon = btn && btn.querySelector('.icon-moon');
+      if (btn) {
+        if (theme === 'dark') { if (sun) sun.classList.add('sr-only'); if (moon) moon.classList.remove('sr-only'); }
+        else { if (sun) sun.classList.remove('sr-only'); if (moon) moon.classList.add('sr-only'); }
+        btn.addEventListener('click', function() {
+          var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+          document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+          localStorage.setItem('theme', isDark ? 'light' : 'dark');
+          if (sun) sun.classList.toggle('sr-only', !isDark);
+          if (moon) moon.classList.toggle('sr-only', isDark);
+        });
+      }
+
+      var questions = [
+        { id: '1', text: 'When solving a problem, I prefer to:', category: 'aptitude', options: ['Break it into smaller steps', 'Try different approaches', 'Discuss with others', 'Research first'] },
+        { id: '2', text: 'I enjoy spending time on:', category: 'interest', options: ['Building things', 'Analyzing data', 'Helping people', 'Learning concepts'] },
+        { id: '3', text: 'How would you rate your comfort with technology?', category: 'skill', options: ['Very comfortable', 'Comfortable', 'Moderate', 'Prefer minimal'] }
+      ];
+
+      function renderQuestions() {
+        var list = document.getElementById('questionList');
+        list.innerHTML = '';
+        questions.forEach(function(q) {
+          var item = document.createElement('div');
+          item.className = 'question-item card';
+          item.innerHTML = '<h3>' + q.text + '</h3><div class="meta">Category: ' + q.category + '</div><div class="options">' + (q.options || []).join(' • ') + '</div><div class="question-actions"><button type="button" class="btn btn-secondary btn-edit" data-id="' + q.id + '">Edit</button><button type="button" class="btn btn-ghost btn-delete" data-id="' + q.id + '">Delete</button></div>';
+          list.appendChild(item);
+        });
+        list.querySelectorAll('.btn-edit').forEach(function(b) {
+          b.addEventListener('click', function() {
+            var id = this.getAttribute('data-id');
+            var q = questions.find(function(x) { return x.id === id; });
+            if (q) {
+              document.getElementById('modalTitle').textContent = 'Edit question';
+              document.getElementById('questionId').value = q.id;
+              document.getElementById('questionText').value = q.text;
+              document.getElementById('questionCategory').value = q.category;
+              var opts = document.querySelectorAll('.option-input');
+              (q.options || []).forEach(function(o, i) { if (opts[i]) opts[i].value = o; });
+              document.getElementById('questionModal').classList.add('open');
+            }
+          });
+        });
+        list.querySelectorAll('.btn-delete').forEach(function(b) {
+          b.addEventListener('click', function() {
+            var id = this.getAttribute('data-id');
+            if (confirm('Delete this question?')) {
+              questions = questions.filter(function(x) { return x.id !== id; });
+              renderQuestions();
+            }
+          });
+        });
+      }
+
+      document.getElementById('addQuestionBtn').addEventListener('click', function() {
+        document.getElementById('modalTitle').textContent = 'Add question';
+        document.getElementById('questionForm').reset();
+        document.getElementById('questionId').value = '';
+        document.querySelectorAll('.option-input').forEach(function(o) { o.value = ''; });
+        document.getElementById('questionModal').classList.add('open');
+      });
+
+      document.getElementById('modalCancel').addEventListener('click', function() {
+        document.getElementById('questionModal').classList.remove('open');
+      });
+
+      document.getElementById('questionModal').addEventListener('click', function(e) {
+        if (e.target === document.getElementById('questionModal')) document.getElementById('questionModal').classList.remove('open');
+      });
+
+      document.getElementById('questionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var id = document.getElementById('questionId').value;
+        var text = document.getElementById('questionText').value.trim();
+        var category = document.getElementById('questionCategory').value;
+        var opts = [];
+        document.querySelectorAll('.option-input').forEach(function(o) {
+          if (o.value.trim()) opts.push(o.value.trim());
+        });
+        if (id) {
+          var q = questions.find(function(x) { return x.id === id; });
+          if (q) { q.text = text; q.category = category; q.options = opts; }
+        } else {
+          questions.push({ id: String(Date.now()), text: text, category: category, options: opts });
+        }
+        renderQuestions();
+        document.getElementById('questionModal').classList.remove('open');
+      });
+
+      renderQuestions();
+      var sidebar = document.getElementById('sidebar');
+      if (sidebar) {
+        function checkSidebar() { if (window.innerWidth >= 1024) sidebar.style.display = 'block'; else sidebar.style.display = 'none'; }
+        checkSidebar();
+        window.addEventListener('resize', checkSidebar);
+      }
+      var hamburger = document.getElementById('hamburger');
+      var mobileNav = document.getElementById('mobileNav');
+      if (hamburger && mobileNav) {
+        hamburger.addEventListener('click', function() { hamburger.classList.toggle('open'); mobileNav.classList.toggle('open'); });
+        mobileNav.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', function() { hamburger.classList.remove('open'); mobileNav.classList.remove('open'); }); });
+      }
+      setTimeout(function() { document.getElementById('pageLoader').classList.add('hidden'); }, 400);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Recommendations | CareerGuide</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .rec-page { padding: var(--space-lg); max-width: 800px; margin: 0 auto; }
+    .rec-header { margin-bottom: var(--space-xl); }
+    .rec-header h1 { margin-bottom: var(--space-sm); }
+    .rec-grid { display: grid; gap: var(--space-lg); grid-template-columns: 1fr; }
+    @media (min-width: 768px) { .rec-grid { grid-template-columns: repeat(2, 1fr); } }
+    .rec-card { padding: var(--space-xl); display: block; text-decoration: none; color: inherit; transition: transform var(--transition-fast), box-shadow var(--transition-base); }
+    .rec-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .rec-card .match { display: inline-block; padding: var(--space-xs) var(--space-sm); font-size: var(--text-xs); font-weight: 600; background: var(--color-primary-light); color: var(--color-primary); border-radius: var(--radius-full); margin-bottom: var(--space-md); }
+    .rec-card h3 { margin-bottom: var(--space-sm); }
+    .rec-card p { font-size: var(--text-sm); color: var(--color-text-secondary); margin-bottom: var(--space-md); }
+    .rec-card .view-link { font-size: var(--text-sm); font-weight: 500; color: var(--color-primary); }
+    .page-loader { position: fixed; inset: 0; background: var(--color-bg); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease, visibility 0.4s ease; }
+    .page-loader.hidden { opacity: 0; visibility: hidden; }
+    .skeleton-rec { height: 160px; border-radius: var(--radius-xl); margin-bottom: var(--space-md); }
+  </style>
+</head>
+<body>
+  <div class="page-loader" id="pageLoader">
+    <div class="container" style="padding: var(--space-xl);">
+      <div class="skeleton skeleton-title" style="height: 28px; margin-bottom: var(--space-xl);"></div>
+      <div class="skeleton skeleton-rec"></div>
+      <div class="skeleton skeleton-rec"></div>
+      <div class="skeleton skeleton-rec"></div>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="container">
+      <div class="header-left">
+        <a href="user-dashboard.html" class="logo">Career<span>Guide</span></a>
+        <nav class="nav-links">
+          <a href="user-dashboard.html">Dashboard</a>
+          <a href="profile-setup.html">Profile</a>
+          <a href="assessment-test.html">Assessment</a>
+          <a href="test-result.html">Test Result</a>
+          <a href="recommendations.html" class="active">Recommendations</a>
+        </nav>
+      </div>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg class="icon-moon sr-only" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <a href="user-dashboard.html" class="btn btn-ghost">Dashboard</a>
+        <a href="test-result.html" class="btn btn-ghost">Test result</a>
+        <button class="hamburger" id="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+  <nav class="mobile-nav" id="mobileNav">
+    <a href="user-dashboard.html">Dashboard</a>
+    <a href="profile-setup.html">Profile</a>
+    <a href="assessment-test.html">Take Assessment</a>
+    <a href="test-result.html">Test Result</a>
+    <a href="recommendations.html" class="active">Recommendations</a>
+    <a href="index.html">Logout</a>
+  </nav>
+
+  <div class="main-with-sidebar">
+    <aside class="sidebar" id="sidebar" style="display: none;">
+      <div class="sidebar-brand">Menu</div>
+      <ul class="sidebar-nav">
+        <li><a href="user-dashboard.html">Dashboard</a></li>
+        <li><a href="profile-setup.html">Profile</a></li>
+        <li><a href="assessment-test.html">Take Assessment</a></li>
+        <li><a href="test-result.html">Test Result</a></li>
+        <li><a href="recommendations.html" class="active">Recommendations</a></li>
+      </ul>
+    </aside>
+  <main class="rec-page">
+    <div class="rec-header">
+      <h1>Your career recommendations</h1>
+      <p class="text-muted">Top careers that match your profile and assessment.</p>
+    </div>
+
+    <div class="rec-grid" id="recGrid">
+      <!-- Filled by JS -->
+    </div>
+  </main>
+  </div>
+
+  <!-- Chatbot -->
+  <button class="chatbot-fab" id="chatbotFab" aria-label="Open career guidance chat">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+  </button>
+  <div class="chatbot-modal" id="chatbotModal">
+    <div class="chatbot-panel">
+      <div class="chatbot-header"><strong>Career Guide</strong><button class="btn btn-ghost" id="chatbotClose">✕</button></div>
+      <div class="chatbot-messages" id="chatMessages">
+        <div class="chat-bubble bot">Click a career card to see details, roadmap, and courses.</div>
+        <div class="chatbot-quick-actions" id="quickActions">
+          <button type="button" data-msg="Suggest a career">Suggest a career</button>
+        </div>
+      </div>
+      <div class="chatbot-input-wrap">
+        <form id="chatForm">
+          <input type="text" id="chatInput" placeholder="Ask about careers...">
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Theme
+      var theme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+      var btn = document.getElementById('themeToggle');
+      var sun = btn && btn.querySelector('.icon-sun');
+      var moon = btn && btn.querySelector('.icon-moon');
+      if (btn) {
+        if (theme === 'dark') { if (sun) sun.classList.add('sr-only'); if (moon) moon.classList.remove('sr-only'); }
+        else { if (sun) sun.classList.remove('sr-only'); if (moon) moon.classList.add('sr-only'); }
+        btn.addEventListener('click', function() {
+          var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+          document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+          localStorage.setItem('theme', isDark ? 'light' : 'dark');
+          if (sun) sun.classList.toggle('sr-only', !isDark);
+          if (moon) moon.classList.toggle('sr-only', isDark);
+        });
+      }
+
+      // Mock recommendations
+      var recommendations = [
+        { id: 'software-developer', title: 'Software Developer', match: 92, desc: 'Build applications and systems. Strong demand and growth.' },
+        { id: 'data-analyst', title: 'Data Analyst', match: 88, desc: 'Analyze data to drive decisions. Blend of tech and business.' },
+        { id: 'ux-designer', title: 'UX Designer', match: 85, desc: 'Design user experiences for products and services.' },
+        { id: 'digital-marketing', title: 'Digital Marketing Specialist', match: 78, desc: 'Run campaigns, SEO, and analytics for brands.' },
+        { id: 'project-manager', title: 'Project Manager', match: 75, desc: 'Lead teams and deliver projects on time.' }
+      ];
+
+      localStorage.setItem('recCount', String(recommendations.length));
+      localStorage.setItem('topCareerName', recommendations[0].title);
+
+      var grid = document.getElementById('recGrid');
+      recommendations.forEach(function(r) {
+        var a = document.createElement('a');
+        a.href = 'career-details.html?id=' + encodeURIComponent(r.id);
+        a.className = 'card rec-card';
+        a.innerHTML = '<span class="match">' + r.match + '% match</span><h3>' + r.title + '</h3><p>' + r.desc + '</p><span class="view-link">View details →</span>';
+        grid.appendChild(a);
+      });
+
+      var sidebar = document.querySelector('.sidebar');
+      if (sidebar) {
+        function checkSidebar() { if (window.innerWidth >= 1024) sidebar.style.display = 'block'; else sidebar.style.display = 'none'; }
+        checkSidebar();
+        window.addEventListener('resize', checkSidebar);
+      }
+      var hamburger = document.getElementById('hamburger');
+      var mobileNav = document.getElementById('mobileNav');
+      if (hamburger && mobileNav) {
+        hamburger.addEventListener('click', function() { hamburger.classList.toggle('open'); mobileNav.classList.toggle('open'); });
+        mobileNav.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', function() { hamburger.classList.remove('open'); mobileNav.classList.remove('open'); }); });
+      }
+      setTimeout(function() {
+        document.getElementById('pageLoader').classList.add('hidden');
+      }, 500);
+
+      // Chatbot
+      var chatbotFab = document.getElementById('chatbotFab');
+      var chatbotModal = document.getElementById('chatbotModal');
+      var chatbotClose = document.getElementById('chatbotClose');
+      var chatMessages = document.getElementById('chatMessages');
+      var chatForm = document.getElementById('chatForm');
+      var chatInput = document.getElementById('chatInput');
+      var quickActions = document.getElementById('quickActions');
+      function addMessage(text, isUser) {
+        var div = document.createElement('div');
+        div.className = 'chat-bubble ' + (isUser ? 'user' : 'bot');
+        div.textContent = text;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+      chatbotFab.addEventListener('click', function() { chatbotModal.classList.add('open'); });
+      chatbotClose.addEventListener('click', function() { chatbotModal.classList.remove('open'); });
+      chatbotModal.addEventListener('click', function(e) { if (e.target === chatbotModal) chatbotModal.classList.remove('open'); });
+      quickActions.querySelectorAll('button').forEach(function(b) {
+        b.addEventListener('click', function() {
+          var msg = this.getAttribute('data-msg');
+          addMessage(msg, true);
+          addMessage('Explore the career cards above. Click any to see roadmap and courses.', false);
+        });
+      });
+      chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var text = chatInput.value.trim();
+        if (!text) return;
+        addMessage(text, true);
+        chatInput.value = '';
+        addMessage('Choose a career from the list and open its details for a full roadmap.', false);
+      });
+    })();
+  </script>
+</body>
+</html>
