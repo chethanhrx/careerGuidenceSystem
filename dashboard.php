@@ -1,69 +1,67 @@
 <?php
 session_start();
-require_once '../config.php';
+require_once 'config.php';
 
-// Check if admin is already logged in
-if (isset($_SESSION['user_id']) && isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1) {
-    header("Location: index.php");
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
     exit();
 }
 
-$errors = [];
-$old_data = [];
+$user_id = $_SESSION['user_id'];
+$user_name = $_SESSION['user_name'];
 
-// Check if form was submitted
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form data
-    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
-    $password = $_POST['password'];
+// Get user profile completion status
+$profile_complete = false;
+$profile_data = [];
+$sql_profile = "SELECT * FROM user_profiles WHERE user_id = '$user_id'";
+$result_profile = mysqli_query($conn, $sql_profile);
+if ($result_profile && mysqli_num_rows($result_profile) > 0) {
+    $profile_complete = true;
+    $profile_data = mysqli_fetch_assoc($result_profile);
+}
+
+// Get test completion status and results
+$test_complete = false;
+$test_results = [];
+$rec_count = 0;
+$top_career_name = '';
+
+$sql_test = "SELECT * FROM user_tests WHERE user_id = '$user_id' ORDER BY completed_at DESC LIMIT 1";
+$result_test = mysqli_query($conn, $sql_test);
+if ($result_test && mysqli_num_rows($result_test) > 0) {
+    $test_complete = true;
+    $test_data = mysqli_fetch_assoc($result_test);
     
-    // Validation
-    if (empty($email)) {
-        $errors['email'] = "Email is required";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors['email'] = "Invalid email format";
-    }
-    
-    if (empty($password)) {
-        $errors['password'] = "Password is required";
-    }
-    
-    // Store old data for repopulation
-    $old_data['email'] = $email;
-    
-    // If no errors, attempt login
-    if (empty($errors)) {
-        // Query to check user - must be admin (is_admin = 1)
-        $sql = "SELECT id, name, email, password_hash, is_admin FROM users WHERE email = '$email' AND is_admin = 1";
-        $result = mysqli_query($conn, $sql);
+    // Decode JSON results
+    if (!empty($test_data['results'])) {
+        $test_results = json_decode($test_data['results'], true);
         
-        if ($result && mysqli_num_rows($result) == 1) {
-            $user = mysqli_fetch_assoc($result);
-            
-            // Verify password
-            if (password_verify($password, $user['password_hash'])) {
-                // Set session variables
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_name'] = $user['name'];
-                $_SESSION['user_email'] = $user['email'];
-                $_SESSION['is_admin'] = $user['is_admin'];
-                $_SESSION['logged_in'] = true;
-                $_SESSION['login_time'] = time();
-                
-                // REMOVED: Update last_login (column doesn't exist)
-                // $update_sql = "UPDATE users SET last_login = NOW() WHERE id = '{$user['id']}'";
-                // mysqli_query($conn, $update_sql);
-                
-                // Redirect to admin dashboard
-                header("Location: index.php");
-                exit();
-            } else {
-                $errors['password'] = "Invalid email or password";
+        // Get recommendation count and top career
+        if (isset($test_results['suggested_careers'])) {
+            $rec_count = count($test_results['suggested_careers']);
+            if ($rec_count > 0) {
+                // Get the first suggested career name
+                $top_career_slug = $test_results['suggested_careers'][0];
+                $sql_career = "SELECT title FROM careers WHERE slug = '$top_career_slug'";
+                $result_career = mysqli_query($conn, $sql_career);
+                if ($result_career && mysqli_num_rows($result_career) > 0) {
+                    $career_data = mysqli_fetch_assoc($result_career);
+                    $top_career_name = $career_data['title'];
+                }
             }
-        } else {
-            $errors['email'] = "Invalid email or not an admin";
         }
     }
+}
+
+// Get saved careers count
+$sql_saved = "SELECT COUNT(*) as saved_count FROM user_careers WHERE user_id = '$user_id'";
+$result_saved = mysqli_query($conn, $sql_saved);
+if ($result_saved) {
+    $saved_data = mysqli_fetch_assoc($result_saved);
+    $saved_count = $saved_data['saved_count'];
+} else {
+    $saved_count = 0;
 }
 ?>
 
@@ -72,154 +70,543 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Login | CareerGuide</title>
-  <link rel="stylesheet" href="../assets/css/style.css">
+  <title>Dashboard | CareerGuide</title>
+  <link rel="stylesheet" href="assets/css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    .auth-page { 
-      min-height: 100vh; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      padding: var(--space-xl);
-      background: var(--color-bg-light);
+    /* Dashboard specific styles */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--color-bg, #f8f9fa);
+      color: var(--color-text, #333);
+      margin: 0;
+      padding: 0;
     }
-    .auth-card { 
-      width: 100%; 
-      max-width: 400px; 
-      padding: var(--space-2xl);
-      background: var(--color-bg);
-      border-radius: var(--radius-xl);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    
+    .dashboard-container {
+      display: flex;
+      min-height: 100vh;
+      margin-top: 60px; /* Account for fixed header */
     }
-    .auth-card h1 { 
-      margin-bottom: var(--space-sm); 
-      text-align: center;
-      color: var(--color-primary);
+    
+    .main-with-sidebar {
+      display: flex;
+      width: 100%;
     }
-    .auth-card .subtitle { 
-      color: var(--color-text-secondary); 
-      margin-bottom: var(--space-xl);
-      text-align: center;
+    
+    /* Fixed sidebar */
+    .sidebar {
+      width: 250px;
+      background: var(--color-surface, #fff);
+      border-right: 1px solid var(--color-border, #e0e0e0);
+      padding: 20px 0;
+      position: fixed;
+      left: 0;
+      top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+      display: block !important; /* Force display */
     }
-    .auth-card .btn-block { 
-      margin-top: var(--space-md); 
+    
+    .sidebar-brand {
+      padding: 0 20px 20px;
+      font-weight: 600;
+      color: var(--color-text, #333);
+      border-bottom: 1px solid var(--color-border, #e0e0e0);
+      margin-bottom: 20px;
     }
-    .auth-links { 
-      text-align: center; 
-      margin-top: var(--space-lg); 
-      font-size: var(--text-sm); 
+    
+    .sidebar-nav {
+      list-style: none;
+      padding: 0;
+      margin: 0;
     }
-    .auth-links a { 
-      display: inline-block; 
-      margin: 0 var(--space-sm); 
-      color: var(--color-primary);
+    
+    .sidebar-nav li {
+      margin: 0;
+    }
+    
+    .sidebar-nav a {
+      display: block;
+      padding: 12px 20px;
+      color: var(--color-text, #333);
       text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
     }
-    .auth-links a:hover {
+    
+    .sidebar-nav a:hover {
+      background: var(--color-surface-hover, #f5f5f5);
+      color: var(--color-primary, #4a6cf7);
+    }
+    
+    .sidebar-nav a.active {
+      background: var(--color-primary-light, #e8ebff);
+      color: var(--color-primary, #4a6cf7);
+      border-left-color: var(--color-primary, #4a6cf7);
+      font-weight: 500;
+    }
+    
+    /* Main content area */
+    .main-content {
+      flex: 1;
+      padding: 30px;
+      margin-left: 250px; /* Same as sidebar width */
+      max-width: calc(100% - 250px);
+    }
+    
+    .dashboard-header {
+      margin-bottom: 30px;
+    }
+    
+    .dashboard-header h1 {
+      margin: 0 0 10px 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    
+    .dashboard-header p {
+      color: var(--color-text-secondary, #666);
+      margin: 0;
+      font-size: 16px;
+    }
+    
+    /* Dashboard cards grid */
+    .dashboard-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .card {
+      background: var(--color-surface, #fff);
+      border-radius: 12px;
+      border: 1px solid var(--color-border, #e0e0e0);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+    
+    .welcome-card {
+      padding: 25px;
+      margin-bottom: 30px;
+    }
+    
+    .welcome-card h2 {
+      margin: 0 0 10px 0;
+      font-size: 22px;
+      font-weight: 600;
+    }
+    
+    .welcome-card p {
+      color: var(--color-text-secondary, #666);
+      margin: 0 0 20px 0;
+      line-height: 1.5;
+    }
+    
+    .stat-card {
+      padding: 25px;
+      text-align: center;
+    }
+    
+    .stat-card .icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin: 0 auto 15px;
+      background: var(--color-primary-light, #e8ebff);
+      color: var(--color-primary, #4a6cf7);
+    }
+    
+    .stat-card .value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--color-text, #333);
+      margin: 0 0 5px 0;
+    }
+    
+    .stat-card .label {
+      font-size: 14px;
+      color: var(--color-text-secondary, #666);
+      margin: 0 0 15px 0;
+    }
+    
+    .stat-card a {
+      display: inline-block;
+      color: var(--color-primary, #4a6cf7);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    
+    .stat-card a:hover {
       text-decoration: underline;
     }
-    .page-loader { 
-      position: fixed; 
-      inset: 0; 
-      background: var(--color-bg); 
-      z-index: 9999; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      transition: opacity 0.4s ease, visibility 0.4s ease; 
+    
+    .analysis-card, .growth-card {
+      padding: 25px;
+      margin-bottom: 30px;
     }
-    .page-loader.hidden { 
-      opacity: 0; 
-      visibility: hidden; 
+    
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 20px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .form-error {
-      color: #dc3545;
-      font-size: 0.875rem;
-      margin-top: 0.25rem;
-      display: block;
+    
+    /* Progress summary */
+    .progress-summary {
+      display: flex;
+      gap: 8px;
+      margin-top: 15px;
     }
-    .form-input.error {
-      border-color: #dc3545;
+    
+    .progress-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ddd;
     }
-    .alert {
-      padding: var(--space-md);
-      border-radius: var(--radius-md);
-      margin-bottom: var(--space-lg);
+    
+    .progress-dot.done {
+      background: #28a745;
     }
-    .alert-danger {
-      background-color: #f8d7da;
-      border: 1px solid #f5c6cb;
-      color: #721c24;
+    
+    .progress-dot.current {
+      background: var(--color-primary, #4a6cf7);
+      animation: pulse 2s infinite;
     }
-    .theme-toggle-container {
-      position: fixed;
-      top: var(--space-md);
-      right: var(--space-md);
-      z-index: 10;
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    
+    /* Test analysis styles */
+    .section-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .section-bar {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .section-bar .label {
+      min-width: 120px;
+      font-weight: 500;
+    }
+    
+    .section-bar .bar-wrap {
+      flex: 1;
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--color-primary, #4a6cf7);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+    
+    .overall-score-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 25px;
+      padding-top: 25px;
+      border-top: 1px solid var(--color-border, #e0e0e0);
+    }
+    
+    /* Growth list */
+    .growth-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .growth-list li {
+      display: flex;
+      align-items: flex-start;
+      padding: 15px 0;
+      border-bottom: 1px solid var(--color-border, #e0e0e0);
+    }
+    
+    .growth-list li:last-child {
+      border-bottom: none;
+    }
+    
+    .growth-list .num {
+      width: 28px;
+      height: 28px;
+      background: var(--color-primary-light, #e8ebff);
+      color: var(--color-primary, #4a6cf7);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      margin-right: 15px;
+      flex-shrink: 0;
+    }
+    
+    .growth-list a {
+      color: var(--color-primary, #4a6cf7);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .growth-list a:hover {
+      text-decoration: underline;
+    }
+    
+    /* Top career pill */
+    .top-career-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: var(--color-surface, #fff);
+      border: 1px solid var(--color-border, #e0e0e0);
+      border-radius: 50px;
+      margin-top: 15px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none !important;
+      }
+      
+      .main-content {
+        margin-left: 0;
+        max-width: 100%;
+        padding: 20px;
+      }
+      
+      .dashboard-cards {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="page-loader" id="pageLoader">
-    <div class="skeleton" style="width: 280px; height: 200px; border-radius: var(--radius-xl);"></div>
-  </div>
-
-  <div class="theme-toggle-container">
-    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-      <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-      <svg class="icon-moon sr-only" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-    </button>
-  </div>
-
-  <main class="auth-page">
-    <div class="card auth-card">
-      <h1>Admin Login</h1>
-      <p class="subtitle">Sign in to manage careers and users.</p>
-      
-      <?php if (!empty($errors)): ?>
-        <div class="alert alert-danger">
-          <strong>Login failed:</strong> Please check your credentials.
-        </div>
-      <?php endif; ?>
-      
-      <form id="adminLoginForm" method="post" action="">
-        <div class="form-group">
-          <label class="form-label" for="email">Email</label>
-          <input type="email" 
-                 id="email" 
-                 name="email" 
-                 class="form-input <?php echo isset($errors['email']) ? 'error' : ''; ?>" 
-                 placeholder="admin@example.com" 
-                 required
-                 value="<?php echo isset($old_data['email']) ? htmlspecialchars($old_data['email']) : ''; ?>">
-          <?php if (isset($errors['email'])): ?>
-            <span class="form-error"><?php echo htmlspecialchars($errors['email']); ?></span>
-          <?php endif; ?>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <input type="password" 
-                 id="password" 
-                 name="password" 
-                 class="form-input <?php echo isset($errors['password']) ? 'error' : ''; ?>" 
-                 placeholder="••••••••" 
-                 required>
-          <?php if (isset($errors['password'])): ?>
-            <span class="form-error"><?php echo htmlspecialchars($errors['password']); ?></span>
-          <?php endif; ?>
-        </div>
-        
-        <button type="submit" class="btn btn-primary btn-block" id="submitBtn">Sign In</button>
-      </form>
-      
-      <div class="auth-links">
-        <a href="../index.php">Back to site</a>
-        <a href="../login.php">User login</a>
+  <!-- Fixed Header -->
+  <header class="site-header" style="position: fixed; top: 0; width: 100%; z-index: 1000; background: var(--color-surface, #fff);">
+    <div class="container">
+      <div class="header-left">
+        <a href="dashboard.php" class="logo">Career<span>Guide</span></a>
+        <nav class="nav-links">
+          <a href="dashboard.php" class="active">Dashboard</a>
+          <a href="profile-setup.php">Profile</a>
+          <a href="assessment.php">Assessment</a>
+          <a href="career-details.php">Careers</a>
+        </nav>
+      </div>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          <svg class="icon-moon sr-only" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+        <a href="profile-setup.php" class="btn btn-ghost">Profile</a>
+        <a href="logout.php" class="btn btn-ghost">Logout</a>
+        <button class="hamburger" id="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
       </div>
     </div>
-  </main>
+  </header>
+  
+  <!-- Mobile Navigation -->
+  <nav class="mobile-nav" id="mobileNav">
+    <a href="dashboard.php" class="active">Dashboard</a>
+    <a href="profile-setup.php">Profile</a>
+    <a href="assessment.php">Take Assessment</a>
+    <a href="career-details.php">Careers</a>
+    <a href="logout.php">Logout</a>
+  </nav>
+
+  <!-- Main Dashboard Layout -->
+  <div class="dashboard-container">
+    <!-- Fixed Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">Menu</div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.php" class="active">Dashboard</a></li>
+        <li><a href="profile-setup.php">Profile</a></li>
+        <li><a href="assessment.php">Take Assessment</a></li>
+        <li><a href="career-details.php">Careers</a></li>
+        <li><a href="logout.php">Logout</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="dashboard-header">
+        <h1>Welcome, <?php echo htmlspecialchars($user_name); ?>!</h1>
+        <p>Track your progress, view test analysis, and plan your career growth.</p>
+      </div>
+
+      <!-- Welcome & progress overview -->
+      <div class="card welcome-card">
+        <h2 id="welcomeTitle">
+          <?php
+          if ($profile_complete && $test_complete && $rec_count > 0) {
+              echo "You're all set";
+          } elseif ($profile_complete && $test_complete) {
+              echo "Assessment complete";
+          } elseif ($profile_complete) {
+              echo "Profile complete";
+          } else {
+              echo "Welcome to CareerGuide";
+          }
+          ?>
+        </h2>
+        <p id="welcomeText">
+          <?php
+          if ($profile_complete && $test_complete && $rec_count > 0) {
+              echo "Your profile and assessment are complete. Review your top career matches and follow the learning roadmaps to grow.";
+          } elseif ($profile_complete && $test_complete) {
+              echo "View your career recommendations and match percentages. Pick a career to see salary, skills, and a step-by-step learning path.";
+          } elseif ($profile_complete) {
+              echo "Take the career assessment next. It will unlock your personalized career recommendations.";
+          } else {
+              echo "Complete your profile (education, stream, skills, interests) first. Then take the assessment to get personalized career recommendations.";
+          }
+          ?>
+        </p>
+        <div class="progress-summary">
+          <span class="progress-dot <?php echo $profile_complete ? 'done' : 'current'; ?>" title="Profile"></span>
+          <span class="progress-dot <?php echo $test_complete ? 'done' : ($profile_complete ? 'current' : ''); ?>" title="Assessment"></span>
+          <span class="progress-dot <?php echo $rec_count > 0 ? 'done' : ($test_complete ? 'current' : ''); ?>" title="Recommendations"></span>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="dashboard-cards">
+        <div class="card stat-card">
+          <div class="icon">📋</div>
+          <div class="value"><?php echo $profile_complete ? 'Complete' : 'Incomplete'; ?></div>
+          <div class="label">Profile</div>
+          <a href="profile-setup.php"><?php echo $profile_complete ? 'View profile →' : 'Complete profile →'; ?></a>
+        </div>
+        
+        <div class="card stat-card">
+          <div class="icon">📝</div>
+          <div class="value"><?php echo $test_complete ? 'Completed' : 'Not taken'; ?></div>
+          <div class="label">Assessment</div>
+          <a href="assessment.php"><?php echo $test_complete ? 'View results →' : 'Start assessment →'; ?></a>
+        </div>
+        
+        <div class="card stat-card">
+          <div class="icon">🎯</div>
+          <div class="value"><?php echo $rec_count; ?></div>
+          <div class="label">Career Recommendations</div>
+          <a href="career-details.php"><?php echo $rec_count > 0 ? 'View recommendations →' : 'Get recommendations →'; ?></a>
+        </div>
+      </div>
+
+      <!-- Test analysis -->
+      <div class="card analysis-card">
+        <h2 class="section-title">📊 Test Analysis</h2>
+        <?php if (!$test_complete): ?>
+          <div class="no-data">
+            <p>You haven't taken the assessment yet. Complete the test to see your analysis.</p>
+            <a href="assessment.php" class="btn btn-primary">Take Assessment</a>
+          </div>
+        <?php else: ?>
+          <div class="section-bars">
+            <?php if (isset($test_results['scores'])): ?>
+              <?php
+              $total_score = 0;
+              $count = 0;
+              foreach ($test_results['scores'] as $career => $score) {
+                  $total_score += $score;
+                  $count++;
+              }
+              $overall_score = $count > 0 ? round($total_score / $count) : 0;
+              ?>
+              <div class="section-bar">
+                <span class="label">Overall Match</span>
+                <div class="bar-wrap">
+                  <div class="progress-bar">
+                    <div class="progress-bar-fill" style="width: <?php echo $overall_score; ?>%"></div>
+                  </div>
+                </div>
+                <span class="pct"><?php echo $overall_score; ?>%</span>
+              </div>
+            <?php endif; ?>
+          </div>
+          <div class="overall-score-wrap">
+            <div>
+              <span style="font-size: 14px; color: #666;">Assessment taken</span>
+              <div class="score"><?php echo isset($test_data['completed_at']) ? date('d M Y', strtotime($test_data['completed_at'])) : 'Recently'; ?></div>
+            </div>
+            <a href="test-results.php" class="btn btn-secondary">View Full Result</a>
+          </div>
+        <?php endif; ?>
+      </div>
+
+      <!-- Career growth -->
+      <div class="card growth-card">
+        <h2 class="section-title">📈 Career Growth</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Your next steps and tips to grow in your recommended careers.</p>
+        
+        <ul class="growth-list">
+          <li>
+            <span class="num">1</span>
+            <span><strong>Complete your profile</strong> — Add education, stream, skills, and interests so we can match you better. 
+            <a href="profile-setup.php"><?php echo $profile_complete ? 'Update profile' : 'Complete profile'; ?></a></span>
+          </li>
+          <li>
+            <span class="num">2</span>
+            <span><strong>Take the assessment</strong> — Answer questions on aptitude, interest, and skills. Takes about 10–15 minutes. 
+            <a href="assessment.php"><?php echo $test_complete ? 'Retake test' : 'Start test'; ?></a></span>
+          </li>
+          <li>
+            <span class="num">3</span>
+            <span><strong>Review career options</strong> — See your match % and read about salary, skills, and roadmaps. 
+            <a href="career-details.php">Browse careers</a></span>
+          </li>
+          <li>
+            <span class="num">4</span>
+            <span><strong>Follow a learning roadmap</strong> — Pick one career and follow the step-by-step path, courses, and certifications. 
+            <a href="career-details.php">Choose a career</a></span>
+          </li>
+          <li>
+            <span class="num">5</span>
+            <span><strong>Build skills and apply</strong> — Learn the required skills, build small projects, and apply for internships or jobs.</span>
+          </li>
+        </ul>
+        
+        <?php if ($rec_count > 0 && !empty($top_career_name)): ?>
+          <div style="margin-top: 25px;">
+            <span style="font-size: 14px; color: #666;">Your top match:</span>
+            <div class="top-career-pill">
+              <span><?php echo htmlspecialchars($top_career_name); ?></span>
+              <a href="career-details.php">View →</a>
+            </div>
+          </div>
+        <?php endif; ?>
+      </div>
+    </main>
+  </div>
 
   <script>
     (function() {
@@ -245,70 +632,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           if (moon) moon.classList.toggle('sr-only', isDark);
         });
       }
-      
-      // Hide page loader
-      var loader = document.getElementById('pageLoader');
-      if (loader) {
-        window.addEventListener('load', function() { 
-          setTimeout(function() { 
-            loader.classList.add('hidden'); 
-          }, 300); 
+
+      // Mobile menu toggle
+      var hamburger = document.getElementById('hamburger');
+      var mobileNav = document.getElementById('mobileNav');
+      if (hamburger && mobileNav) {
+        hamburger.addEventListener('click', function() { 
+          hamburger.classList.toggle('open'); 
+          mobileNav.classList.toggle('open'); 
+        });
+        mobileNav.querySelectorAll('a').forEach(function(a) { 
+          a.addEventListener('click', function() { 
+            hamburger.classList.remove('open'); 
+            mobileNav.classList.remove('open'); 
+          }); 
         });
       }
 
-      // Form validation
-      var form = document.getElementById('adminLoginForm');
-      var submitBtn = document.getElementById('submitBtn');
-      
-      form.addEventListener('submit', function(e) {
-        // Clear previous error styling
-        document.querySelectorAll('.form-input').forEach(function(input) {
-          input.classList.remove('error');
+      // Animate progress bars on load
+      document.addEventListener('DOMContentLoaded', function() {
+        var progressBars = document.querySelectorAll('.progress-bar-fill');
+        progressBars.forEach(function(bar) {
+          var width = bar.style.width;
+          bar.style.width = '0';
+          setTimeout(function() {
+            bar.style.width = width;
+          }, 300);
         });
-        
-        var email = document.getElementById('email').value.trim();
-        var password = document.getElementById('password').value;
-        
-        var hasError = false;
-        
-        if (!email) {
-          document.getElementById('email').classList.add('error');
-          hasError = true;
-        }
-        
-        if (!password) {
-          document.getElementById('password').classList.add('error');
-          hasError = true;
-        }
-        
-        if (!hasError && submitBtn) {
-          // Disable button and show loading state
-          submitBtn.disabled = true;
-          submitBtn.textContent = 'Signing in...';
-          submitBtn.classList.add('loading');
-          
-          // Form will submit normally to PHP backend
-          return true;
-        } else if (hasError) {
-          e.preventDefault();
-          return false;
-        }
       });
-
-      // Auto-focus email field
-      document.getElementById('email')?.focus();
-
-      // Handle "Enter" key for login
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
-          var activeElement = document.activeElement;
-          if (activeElement.tagName === 'INPUT' && activeElement.type !== 'submit') {
-            e.preventDefault();
-            form.requestSubmit();
-          }
+      
+      // Show sidebar on desktop, hide on mobile
+      function checkSidebar() {
+        var sidebar = document.getElementById('sidebar');
+        if (window.innerWidth >= 768) {
+          sidebar.style.display = 'block';
+        } else {
+          sidebar.style.display = 'none';
         }
-      });
-
+      }
+      
+      window.addEventListener('resize', checkSidebar);
+      checkSidebar(); // Initial check
     })();
   </script>
 </body>
