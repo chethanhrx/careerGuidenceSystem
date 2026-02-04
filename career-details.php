@@ -140,7 +140,7 @@ if ($test_result && mysqli_num_rows($test_result) > 0) {
         <a href="dashboard.php" class="logo">Career<span>Guide</span></a>
         <nav class="nav-links">
           <a href="dashboard.php">Dashboard</a>
-          <a href="profile.php">Profile</a>
+          <a href="profile-setup.php">Profile</a>
           <a href="assessment.php">Assessment</a>
           <a href="careers.php" class="active">Careers</a>
         </nav>
@@ -160,7 +160,7 @@ if ($test_result && mysqli_num_rows($test_result) > 0) {
 
   <nav class="mobile-nav" id="mobileNav">
     <a href="dashboard.php">Dashboard</a>
-    <a href="profile.php">Profile</a>
+    <a href="profile-setup.php">Profile</a>
     <a href="assessment.php">Assessment</a>
     <a href="careers.php" class="active">Careers</a>
     <a href="logout.php">Logout</a>
