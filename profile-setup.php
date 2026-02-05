@@ -141,6 +141,7 @@ if (isset($_SESSION['user_id'])) {
           <a href="profile-setup.php" class="active">Profile</a>
           <a href="assessment.php">Assessment</a>
           <a href="careers.php">Careers</a>
+          <a href="test-results.php">Results</a>
         </nav>
       </div>
       <div class="nav-actions">
@@ -159,6 +160,7 @@ if (isset($_SESSION['user_id'])) {
     <a href="profile-setup.php" class="active">Profile</a>
     <a href="assessment.php">Take Assessment</a>
     <a href="careers.php">Careers</a>
+    <a href="test-results.php">Results</a>
     <a href="./logout.php">Logout</a>
   </nav>
 

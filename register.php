@@ -254,6 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <nav class="nav-links">
           <a href="index.php">Home</a>
           <a href="login.php">Login</a>
+          <a href="test-results.php">Results</a>
         </nav>
       </div>
       <div class="nav-actions">
@@ -270,6 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <nav class="mobile-nav" id="mobileNav">
     <a href="index.php">Home</a>
     <a href="login.php">Login</a>
+    <a href="test-results.php">Results</a>
   </nav>
 
   <main class="auth-page">

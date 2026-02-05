@@ -333,7 +333,7 @@ if (isset($test_results['scores'])) {
           <a href="user-dashboard.html">Dashboard</a>
           <a href="profile-setup.html">Profile</a>
           <a href="assessment-test.html">Assessment</a>
-          <a href="test-result.html" class="active">Test Result</a>
+          <a href="test-results.php" class="active">Test Result</a>
           <a href="recommendations.html">Recommendations</a>
         </nav>
       </div>
@@ -352,7 +352,7 @@ if (isset($test_results['scores'])) {
     <a href="user-dashboard.html">Dashboard</a>
     <a href="profile-setup.html">Profile</a>
     <a href="assessment-test.html">Take Assessment</a>
-    <a href="test-result.html" class="active">Test Result</a>
+    <a href="test-results.php" class="active">Test Result</a>
     <a href="recommendations.html">Recommendations</a>
     <a href="index.html">Logout</a>
   </nav>
@@ -364,7 +364,7 @@ if (isset($test_results['scores'])) {
         <li><a href="user-dashboard.html">Dashboard</a></li>
         <li><a href="profile-setup.html">Profile</a></li>
         <li><a href="assessment-test.html">Take Assessment</a></li>
-        <li><a href="test-result.html" class="active">Test Result</a></li>
+        <li><a href="test-results.php" class="active">Test Result</a></li>
         <li><a href="recommendations.html">Recommendations</a></li>
       </ul>
     </aside>

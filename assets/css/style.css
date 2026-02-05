@@ -1201,3 +1201,17 @@ body.has-sidebar-admin .main-with-sidebar {
 
 .text-center { text-align: center; }
 .text-muted { color: var(--color-text-muted); }
+
+/* --- Mobile/Android specific tweaks --- */
+@media (max-width: 600px) {
+  /* Increase tappable area, font sizes, and simplify header actions on small screens */
+  .mobile-nav a { padding: 0.9rem 1rem; font-size: 1rem; min-height: 48px; display: flex; align-items: center; }
+  .hamburger { width: 48px; height: 48px; }
+  .site-header .logo { font-size: 1rem; }
+  .nav-actions .btn { display: none; }
+  .main-with-sidebar { margin-left: 0; }
+  .sidebar { display: none !important; }
+  /* Ensure mobile nav sits above content on Android and is easily scannable */
+  .mobile-nav { padding-top: 0.6rem; padding-bottom: 0.6rem; box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
+}
+

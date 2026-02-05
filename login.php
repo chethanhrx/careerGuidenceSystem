@@ -112,6 +112,7 @@ if (isset($_SESSION['user_id'])) {
         <nav class="nav-links">
           <a href="index.php">Home</a>
           <a href="register.php">Register</a>
+          <a href="test-results.php">Results</a>
         </nav>
       </div>
       <div class="nav-actions">
@@ -128,6 +129,7 @@ if (isset($_SESSION['user_id'])) {
   <nav class="mobile-nav" id="mobileNav">
     <a href="index.php">Home</a>
     <a href="register.php">Register</a>
+    <a href="test-results.php">Results</a>
   </nav>
 
   <main class="auth-page">

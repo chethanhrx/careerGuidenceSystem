@@ -308,6 +308,7 @@ if (!$test_submitted) {
           <a href="profile-setup.php">Profile</a>
           <a href="assessment.php" class="active">Assessment</a>
           <a href="career-details.php">Careers</a>
+          <a href="test-results.php">Results</a>
         </nav>
       </div>
       <div class="nav-actions">
@@ -321,6 +322,14 @@ if (!$test_submitted) {
       </div>
     </div>
   </header>
+  <nav class="mobile-nav" id="mobileNav">
+    <a href="dashboard.php">Dashboard</a>
+    <a href="profile-setup.php">Profile</a>
+    <a href="assessment.php" class="active">Assessment</a>
+    <a href="career-details.php">Careers</a>
+    <a href="test-results.php">Results</a>
+    <a href="./logout.php">Logout</a>
+  </nav>
 
   <!-- Assessment Container -->
   <div class="assessment-container <?php echo $test_submitted ? '' : 'active'; ?>" id="assessmentContainer">

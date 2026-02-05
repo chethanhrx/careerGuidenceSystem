@@ -419,6 +419,7 @@ if ($result_saved) {
           <a href="profile-setup.php">Profile</a>
           <a href="assessment.php">Assessment</a>
           <a href="career-details.php">Careers</a>
+          <a href="test-results.php">Results</a>
         </nav>
       </div>
       <div class="nav-actions">
@@ -439,6 +440,7 @@ if ($result_saved) {
     <a href="profile-setup.php">Profile</a>
     <a href="assessment.php">Take Assessment</a>
     <a href="career-details.php">Careers</a>
+    <a href="test-results.php">Results</a>
     <a href="./logout.php">Logout</a>
   </nav>
 
@@ -450,6 +452,7 @@ if ($result_saved) {
       <ul class="sidebar-nav">
         <li><a href="dashboard.php" class="active">Dashboard</a></li>
         <li><a href="profile-setup.php">Profile</a></li>
+        <li><a href="test-results.php">Results</a></li>
         <li><a href="assessment.php">Take Assessment</a></li>
         <li><a href="career-details.php">Careers</a></li>
         <li><a href="./logout.php">Logout</a></li>

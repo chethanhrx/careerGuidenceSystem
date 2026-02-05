@@ -250,6 +250,7 @@
           <a href="index.php" class="active">Home</a>
           <a href="index.php#how-it-works">How it works</a>
           <a href="index.php#who">Who it's for</a>
+          <a href="test-results.php">Results</a>
         </nav>
       </div>
       <div class="nav-actions">
@@ -269,6 +270,7 @@
     <a href="index.php" class="active">Home</a>
     <a href="index.php#how-it-works">How it works</a>
     <a href="index.php#who">Who it's for</a>
+    <a href="test-results.php">Results</a>
     <a href="login.php">Login</a>
     <a href="register.php">Get Started</a>
   </nav>
