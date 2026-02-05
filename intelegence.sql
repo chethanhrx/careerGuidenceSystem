@@ -107,7 +107,7 @@ INSERT INTO `careers` (`id`, `slug`, `title`, `category`, `overview`, `skills`, 
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `name` varchar(200) NOT NULL,
-  `email` varchar(200) NOT NULL,
+  `email` varchar(191) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `is_admin` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()

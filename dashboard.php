@@ -427,7 +427,7 @@ if ($result_saved) {
           <svg class="icon-moon sr-only" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
         </button>
         <a href="profile-setup.php" class="btn btn-ghost">Profile</a>
-        <a href="logout.php" class="btn btn-ghost">Logout</a>
+        <a href="./logout.php" class="btn btn-ghost">Logout</a>
         <button class="hamburger" id="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
       </div>
     </div>
@@ -439,7 +439,7 @@ if ($result_saved) {
     <a href="profile-setup.php">Profile</a>
     <a href="assessment.php">Take Assessment</a>
     <a href="career-details.php">Careers</a>
-    <a href="logout.php">Logout</a>
+    <a href="./logout.php">Logout</a>
   </nav>
 
   <!-- Main Dashboard Layout -->
@@ -452,7 +452,7 @@ if ($result_saved) {
         <li><a href="profile-setup.php">Profile</a></li>
         <li><a href="assessment.php">Take Assessment</a></li>
         <li><a href="career-details.php">Careers</a></li>
-        <li><a href="logout.php">Logout</a></li>
+        <li><a href="./logout.php">Logout</a></li>
       </ul>
     </aside>
 

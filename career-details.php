@@ -163,7 +163,7 @@ if ($test_result && mysqli_num_rows($test_result) > 0) {
     <a href="profile-setup.php">Profile</a>
     <a href="assessment.php">Assessment</a>
     <a href="careers.php" class="active">Careers</a>
-    <a href="logout.php">Logout</a>
+    <a href="./logout.php">Logout</a>
   </nav>
 
   <main class="careers-page">

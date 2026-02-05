@@ -149,7 +149,7 @@ if (isset($_SESSION['user_id'])) {
           <svg class="icon-moon sr-only" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
         </button>
         <a href="dashboard.php" class="btn btn-ghost">Dashboard</a>
-        <a href="logout.php" class="btn btn-ghost">Logout</a>
+        <a href="./logout.php" class="btn btn-ghost">Logout</a>
         <button class="hamburger" id="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
       </div>
     </div>
@@ -159,7 +159,7 @@ if (isset($_SESSION['user_id'])) {
     <a href="profile-setup.php" class="active">Profile</a>
     <a href="assessment.php">Take Assessment</a>
     <a href="careers.php">Careers</a>
-    <a href="logout.php">Logout</a>
+    <a href="./logout.php">Logout</a>
   </nav>
 
   <main class="profile-page">

@@ -162,7 +162,7 @@ if (isset($test_results['scores'])) {
     <a href="assessment.php">Take Assessment</a>
     <a href="test-results.php" class="active">Test Result</a>
     <a href="careers.php">Careers</a>
-    <a href="logout.php">Logout</a>
+    <a href="./logout.php">Logout</a>
   </nav>
 
   <div class="main-with-sidebar">
@@ -174,7 +174,7 @@ if (isset($test_results['scores'])) {
         <li><a href="assessment.php">Take Assessment</a></li>
         <li><a href="test-results.php" class="active">Test Result</a></li>
         <li><a href="careers.php">Careers</a></li>
-        <li><a href="logout.php">Logout</a></li>
+        <li><a href="./logout.php">Logout</a></li>
       </ul>
     </aside>
     

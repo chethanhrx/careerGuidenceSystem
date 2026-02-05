@@ -245,11 +245,11 @@
   <header class="site-header">
     <div class="container">
       <div class="header-left">
-        <a href="index.html" class="logo">Career<span>Guide</span></a>
+        <a href="index.php" class="logo">Career<span>Guide</span></a>
         <nav class="nav-links">
-          <a href="index.html" class="active">Home</a>
-          <a href="index.html#how-it-works">How it works</a>
-          <a href="index.html#who">Who it's for</a>
+          <a href="index.php" class="active">Home</a>
+          <a href="index.php#how-it-works">How it works</a>
+          <a href="index.php#who">Who it's for</a>
         </nav>
       </div>
       <div class="nav-actions">
@@ -257,8 +257,8 @@
           <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
           <svg class="icon-moon sr-only" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
         </button>
-        <a href="login.html" class="btn btn-ghost">Login</a>
-        <a href="register.html" class="btn btn-primary">Get Started</a>
+        <a href="login.php" class="btn btn-ghost">Login</a>
+        <a href="register.php" class="btn btn-primary">Get Started</a>
         <button class="hamburger" id="hamburger" aria-label="Open menu">
           <span></span><span></span><span></span>
         </button>
@@ -266,11 +266,11 @@
     </div>
   </header>
   <nav class="mobile-nav" id="mobileNav">
-    <a href="index.html" class="active">Home</a>
-    <a href="index.html#how-it-works">How it works</a>
-    <a href="index.html#who">Who it's for</a>
-    <a href="login.html">Login</a>
-    <a href="register.html">Get Started</a>
+    <a href="index.php" class="active">Home</a>
+    <a href="index.php#how-it-works">How it works</a>
+    <a href="index.php#who">Who it's for</a>
+    <a href="login.php">Login</a>
+    <a href="register.php">Get Started</a>
   </nav>
 
   <main>
@@ -279,8 +279,8 @@
         <h1>Discover Your Ideal Career Path</h1>
         <p>Take a smart assessment, get personalized career recommendations, and build a roadmap to success.</p>
         <div class="hero-cta">
-          <a href="register.html" class="btn btn-primary">Start Free Assessment</a>
-          <a href="login.html" class="btn btn-secondary">Sign In</a>
+          <a href="register.php" class="btn btn-primary">Start Free Assessment</a>
+          <a href="login.php" class="btn btn-secondary">Sign In</a>
         </div>
       </div>
     </section>
@@ -392,7 +392,7 @@
 
     <footer class="footer">
       <div class="container">
-        <p>&copy; 2025 CareerGuide. Intelligent Career Guidance System. <a href="admin/login.html">Admin</a></p>
+        <p>&copy; 2025 CareerGuide. Intelligent Career Guidance System. <a href="admin/login.php">Admin</a></p>
       </div>
     </footer>
   </main>

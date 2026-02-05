@@ -4,7 +4,7 @@
 $host = "localhost";
 $username = "root";
 $password = "";
-$database = "intelegence";
+$database = "intelligence";
 
 // Create connection
 $conn = mysqli_connect($host, $username, $password, $database);

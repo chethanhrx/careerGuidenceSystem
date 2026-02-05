@@ -419,7 +419,7 @@ if (!empty($user_profile['skills']) && !empty($latest_test)) {
                     Hi, <?php echo htmlspecialchars($user_name); ?>
                 </span>
                 <a href="dashboard.php" class="btn btn-ghost">Dashboard</a>
-                <a href="logout.php" class="btn btn-primary">Logout</a>
+                <a href="./logout.php" class="btn btn-primary">Logout</a>
                 <button class="hamburger" id="hamburger" aria-label="Open menu">
                     <span></span><span></span><span></span>
                 </button>
@@ -433,7 +433,7 @@ if (!empty($user_profile['skills']) && !empty($latest_test)) {
         <a href="assessment.php">Assessment</a>
         <a href="test-results.php" class="active">Results</a>
         <a href="careers.php">Careers</a>
-        <a href="logout.php">Logout</a>
+        <a href="./logout.php">Logout</a>
     </nav>
 
     <main class="results-page">

@@ -417,7 +417,7 @@ foreach ($users as $user) {
           Hi, <?php echo htmlspecialchars($admin_name); ?>
         </span>
         <a href="../index.php" target="_blank" class="btn btn-ghost">View Site</a>
-        <a href="logout.php" class="btn btn-primary">Logout</a>
+        <a href="../logout.php" class="btn btn-primary">Logout</a>
         <button class="hamburger" id="hamburger" aria-label="Open menu">
           <span></span><span></span><span></span>
         </button>
@@ -431,7 +431,7 @@ foreach ($users as $user) {
     <a href="questions.php">Questions</a>
     <a href="users.php" class="active">Users</a>
     <a href="../index.php">View Site</a>
-    <a href="logout.php">Logout</a>
+    <a href="../logout.php">Logout</a>
   </nav>
 
   <div class="admin-header">
