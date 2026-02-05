@@ -28,10 +28,10 @@ $is_admin_page = strpos($referer, '/admin/') !== false;
 // Redirect based on where they came from
 if ($is_admin_page) {
     // Redirect admin to admin login
-    header("Location: login.php?logout=success");
+    header("Location: ./login.php?logout=success");
 } else {
     // Redirect regular user to main site login
-    header("Location: ../login.php?logout=success");
+    header("Location: ./login.php?logout=success");
 }
 exit();
 ?>
