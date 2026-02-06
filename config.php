@@ -1,10 +1,10 @@
 <?php
 // config.php - Simple database connection
 
-$host = "mysql-badboychx66.alwaysdata.net";
-$username = "334704";
-$password = "9972454365@hr";
-$database = "badboychx66_intelligence";
+$host = "localhost";
+$username = "root";
+$password = "";
+$database = "intelligence";
 
 // Create connection
 $conn = mysqli_connect($host, $username, $password, $database);
