@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once 'config.php';
 
 $errors = [];
@@ -7,66 +6,90 @@ $old_data = [];
 
 // Check if form was submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form data
-    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
-    $password = $_POST['password'];
-    
-    // Validation
-    if (empty($email)) {
-        $errors['email'] = "Email is required";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors['email'] = "Invalid email format";
-    }
-    
-    if (empty($password)) {
-        $errors['password'] = "Password is required";
-    }
-    
-    // Store old data for repopulation
-    $old_data['email'] = $email;
-    
-    // If no errors, attempt login
-    if (empty($errors)) {
-        // Query to check user
-        $sql = "SELECT id, name, email, password_hash, is_admin FROM users WHERE email = '$email'";
-        $result = mysqli_query($conn, $sql);
+    // Validate CSRF token
+    if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+        $errors['general'] = "Invalid request. Please try again.";
+    } else {
+        // Get form data
+        $email = trim($_POST['email']);
+        $password = $_POST['password'];
         
-        if (mysqli_num_rows($result) == 1) {
-            $user = mysqli_fetch_assoc($result);
-            
-            // Verify password
-            if (password_verify($password, $user['password_hash'])) {
-                // Set session variables
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_name'] = $user['name'];
-                $_SESSION['user_email'] = $user['email'];
-                $_SESSION['is_admin'] = $user['is_admin'];
+        // Validation
+        if (empty($email)) {
+            $errors['email'] = "Email is required";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = "Invalid email format";
+        }
+        
+        if (empty($password)) {
+            $errors['password'] = "Password is required";
+        }
+        
+        // Store old data for repopulation
+        $old_data['email'] = $email;
+        
+        // If no errors, attempt login
+        if (empty($errors)) {
+            try {
+                // Use prepared statement to prevent SQL injection
+                $pdo = getDBConnection();
+                $stmt = $pdo->prepare("SELECT id, name, email, password_hash, is_admin FROM users WHERE email = :email");
+                $stmt->execute(['email' => $email]);
+                $user = $stmt->fetch();
                 
-                // Redirect based on user type
-                if ($user['is_admin'] == 1) {
-                    header("Location: admin/index.php");
+                if ($user) {
+                    // Verify password
+                    if (password_verify($password, $user['password_hash'])) {
+                        // Regenerate session to prevent fixation
+                        regenerateSession();
+                        
+                        // Set session variables
+                        $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['user_name'] = $user['name'];
+                        $_SESSION['user_email'] = $user['email'];
+                        $_SESSION['is_admin'] = $user['is_admin'];
+                        $_SESSION['logged_in'] = true;
+                        $_SESSION['login_time'] = time();
+                        
+                        // Update last login
+                        $updateStmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = :id");
+                        $updateStmt->execute(['id' => $user['id']]);
+                        
+                        // Redirect based on user type
+                        if ($user['is_admin'] == 1) {
+                            header("Location: admin/index.php");
+                        } else {
+                            // Check for redirect parameter
+                            $redirect = isset($_GET['redirect']) ? $_GET['redirect'] : 'dashboard.php';
+                            header("Location: " . $redirect);
+                        }
+                        exit();
+                    } else {
+                        $errors['password'] = "Invalid email or password";
+                    }
                 } else {
-                    header("Location: dashboard.php");
+                    $errors['email'] = "Invalid email or password";
                 }
-                exit();
-            } else {
-                $errors['password'] = "Invalid email or password";
+            } catch (PDOException $e) {
+                error_log("Login Error: " . $e->getMessage());
+                $errors['general'] = "An error occurred. Please try again later.";
             }
-        } else {
-            $errors['email'] = "Invalid email or password";
         }
     }
 }
 
 // Check if user is already logged in
-if (isset($_SESSION['user_id'])) {
-    if ($_SESSION['is_admin'] == 1) {
+if (isLoggedIn()) {
+    if (isAdmin()) {
         header("Location: admin/index.php");
     } else {
         header("Location: dashboard.php");
     }
     exit();
 }
+
+// Generate CSRF token
+$csrfToken = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -150,6 +173,14 @@ if (isset($_SESSION['user_id'])) {
       <?php endif; ?>
       
       <form id="loginForm" method="post" action="">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
+        
+        <?php if (isset($errors['general'])): ?>
+          <div class="alert alert-danger">
+            <?php echo htmlspecialchars($errors['general']); ?>
+          </div>
+        <?php endif; ?>
+        
         <div class="form-group">
           <label class="form-label" for="email">Email</label>
           <input type="email" id="email" name="email" class="form-input <?php echo isset($errors['email']) ? 'error' : ''; ?>" 

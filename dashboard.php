@@ -1,24 +1,26 @@
 <?php
-session_start();
 require_once 'config.php';
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
+// Check if user is logged in - using our secure helper function
+requireLogin();
 
 $user_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'];
 
-// Get user profile completion status
+// Get user profile completion status using prepared statements
 $profile_complete = false;
 $profile_data = [];
-$sql_profile = "SELECT * FROM user_profiles WHERE user_id = '$user_id'";
-$result_profile = mysqli_query($conn, $sql_profile);
-if ($result_profile && mysqli_num_rows($result_profile) > 0) {
-    $profile_complete = true;
-    $profile_data = mysqli_fetch_assoc($result_profile);
+
+try {
+    $pdo = getDBConnection();
+    $stmt = $pdo->prepare("SELECT * FROM user_profiles WHERE user_id = :user_id");
+    $stmt->execute(['user_id' => $user_id]);
+    $profile_data = $stmt->fetch();
+    if ($profile_data) {
+        $profile_complete = true;
+    }
+} catch (PDOException $e) {
+    error_log("Profile fetch error: " . $e->getMessage());
 }
 
 // Get test completion status and results
@@ -27,41 +29,47 @@ $test_results = [];
 $rec_count = 0;
 $top_career_name = '';
 
-$sql_test = "SELECT * FROM user_tests WHERE user_id = '$user_id' ORDER BY completed_at DESC LIMIT 1";
-$result_test = mysqli_query($conn, $sql_test);
-if ($result_test && mysqli_num_rows($result_test) > 0) {
-    $test_complete = true;
-    $test_data = mysqli_fetch_assoc($result_test);
+try {
+    $stmt = $pdo->prepare("SELECT * FROM user_tests WHERE user_id = :user_id ORDER BY completed_at DESC LIMIT 1");
+    $stmt->execute(['user_id' => $user_id]);
+    $test_data = $stmt->fetch();
     
-    // Decode JSON results
-    if (!empty($test_data['results'])) {
-        $test_results = json_decode($test_data['results'], true);
+    if ($test_data) {
+        $test_complete = true;
         
-        // Get recommendation count and top career
-        if (isset($test_results['suggested_careers'])) {
-            $rec_count = count($test_results['suggested_careers']);
-            if ($rec_count > 0) {
-                // Get the first suggested career name
-                $top_career_slug = $test_results['suggested_careers'][0];
-                $sql_career = "SELECT title FROM careers WHERE slug = '$top_career_slug'";
-                $result_career = mysqli_query($conn, $sql_career);
-                if ($result_career && mysqli_num_rows($result_career) > 0) {
-                    $career_data = mysqli_fetch_assoc($result_career);
-                    $top_career_name = $career_data['title'];
+        // Decode JSON results
+        if (!empty($test_data['results'])) {
+            $test_results = json_decode($test_data['results'], true);
+            
+            // Get recommendation count and top career
+            if (isset($test_results['suggested_careers'])) {
+                $rec_count = count($test_results['suggested_careers']);
+                if ($rec_count > 0) {
+                    // Get the first suggested career name
+                    $top_career_slug = $test_results['suggested_careers'][0];
+                    $careerStmt = $pdo->prepare("SELECT title FROM careers WHERE slug = :slug");
+                    $careerStmt->execute(['slug' => $top_career_slug]);
+                    $career_data = $careerStmt->fetch();
+                    if ($career_data) {
+                        $top_career_name = $career_data['title'];
+                    }
                 }
             }
         }
     }
+} catch (PDOException $e) {
+    error_log("Test fetch error: " . $e->getMessage());
 }
 
 // Get saved careers count
-$sql_saved = "SELECT COUNT(*) as saved_count FROM user_careers WHERE user_id = '$user_id'";
-$result_saved = mysqli_query($conn, $sql_saved);
-if ($result_saved) {
-    $saved_data = mysqli_fetch_assoc($result_saved);
-    $saved_count = $saved_data['saved_count'];
-} else {
+try {
+    $stmt = $pdo->prepare("SELECT COUNT(*) as saved_count FROM user_careers WHERE user_id = :user_id");
+    $stmt->execute(['user_id' => $user_id]);
+    $saved_data = $stmt->fetch();
+    $saved_count = $saved_data ? $saved_data['saved_count'] : 0;
+} catch (PDOException $e) {
     $saved_count = 0;
+    error_log("Saved careers count error: " . $e->getMessage());
 }
 ?>
 

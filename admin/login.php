@@ -1,9 +1,8 @@
 <?php
-session_start();
 require_once '../config.php';
 
 // Check if admin is already logged in
-if (isset($_SESSION['user_id']) && isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1) {
+if (isLoggedIn() && isAdmin()) {
     header("Location: index.php");
     exit();
 }
@@ -13,58 +12,74 @@ $old_data = [];
 
 // Check if form was submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form data
-    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
-    $password = $_POST['password'];
-    
-    // Validation
-    if (empty($email)) {
-        $errors['email'] = "Email is required";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors['email'] = "Invalid email format";
-    }
-    
-    if (empty($password)) {
-        $errors['password'] = "Password is required";
-    }
-    
-    // Store old data for repopulation
-    $old_data['email'] = $email;
-    
-    // If no errors, attempt login
-    if (empty($errors)) {
-        // Query to check user - must be admin (is_admin = 1)
-        $sql = "SELECT id, name, email, password_hash, is_admin FROM users WHERE email = '$email' AND is_admin = 1";
-        $result = mysqli_query($conn, $sql);
+    // Validate CSRF token
+    if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+        $errors['general'] = "Invalid request. Please try again.";
+    } else {
+        // Get form data
+        $email = trim($_POST['email']);
+        $password = $_POST['password'];
         
-        if ($result && mysqli_num_rows($result) == 1) {
-            $user = mysqli_fetch_assoc($result);
-            
-            // Verify password
-            if (password_verify($password, $user['password_hash'])) {
-                // Set session variables
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_name'] = $user['name'];
-                $_SESSION['user_email'] = $user['email'];
-                $_SESSION['is_admin'] = $user['is_admin'];
-                $_SESSION['logged_in'] = true;
-                $_SESSION['login_time'] = time();
+        // Validation
+        if (empty($email)) {
+            $errors['email'] = "Email is required";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = "Invalid email format";
+        }
+        
+        if (empty($password)) {
+            $errors['password'] = "Password is required";
+        }
+        
+        // Store old data for repopulation
+        $old_data['email'] = $email;
+        
+        // If no errors, attempt login
+        if (empty($errors)) {
+            try {
+                // Use prepared statement - must be admin (is_admin = 1)
+                $pdo = getDBConnection();
+                $stmt = $pdo->prepare("SELECT id, name, email, password_hash, is_admin FROM users WHERE email = :email AND is_admin = 1");
+                $stmt->execute(['email' => $email]);
+                $user = $stmt->fetch();
                 
-                // Update last login
-                $update_sql = "UPDATE users SET last_login = NOW() WHERE id = '{$user['id']}'";
-                mysqli_query($conn, $update_sql);
-                
-                // Redirect to admin dashboard
-                header("Location: index.php");
-                exit();
-            } else {
-                $errors['password'] = "Invalid email or password";
+                if ($user) {
+                    // Verify password
+                    if (password_verify($password, $user['password_hash'])) {
+                        // Regenerate session to prevent fixation
+                        regenerateSession();
+                        
+                        // Set session variables
+                        $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['user_name'] = $user['name'];
+                        $_SESSION['user_email'] = $user['email'];
+                        $_SESSION['is_admin'] = $user['is_admin'];
+                        $_SESSION['logged_in'] = true;
+                        $_SESSION['login_time'] = time();
+                        
+                        // Update last login
+                        $updateStmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = :id");
+                        $updateStmt->execute(['id' => $user['id']]);
+                        
+                        // Redirect to admin dashboard
+                        header("Location: index.php");
+                        exit();
+                    } else {
+                        $errors['password'] = "Invalid email or password";
+                    }
+                } else {
+                    $errors['email'] = "Invalid email or not an admin";
+                }
+            } catch (PDOException $e) {
+                error_log("Admin Login Error: " . $e->getMessage());
+                $errors['general'] = "An error occurred. Please try again.";
             }
-        } else {
-            $errors['email'] = "Invalid email or not an admin";
         }
     }
 }
+
+// Generate CSRF token
+$csrfToken = generateCSRFToken();
 ?>
 
 <!DOCTYPE html>
@@ -184,6 +199,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php endif; ?>
       
       <form id="adminLoginForm" method="post" action="">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
+        
+        <?php if (isset($errors['general'])): ?>
+          <div class="alert alert-danger">
+            <?php echo htmlspecialchars($errors['general']); ?>
+          </div>
+        <?php endif; ?>
+        
         <div class="form-group">
           <label class="form-label" for="email">Email</label>
           <input type="email" 

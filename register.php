@@ -1,9 +1,8 @@
 <?php
-session_start();
 require_once 'config.php';
 
 // Check if user is already logged in
-if (isset($_SESSION['user_id'])) {
+if (isLoggedIn()) {
     header("Location: dashboard.php");
     exit();
 }
@@ -13,89 +12,119 @@ $old_data = [];
 
 // Check if form was submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form data
-    $name = mysqli_real_escape_string($conn, trim($_POST['name']));
-    $email = mysqli_real_escape_string($conn, trim($_POST['email']));
-    $password = $_POST['password'];
-    $confirmPassword = $_POST['confirmPassword'];
-    
-    // Validation
-    if (empty($name)) {
-        $errors['name'] = "Name is required";
-    } elseif (strlen($name) < 2) {
-        $errors['name'] = "Name must be at least 2 characters";
-    }
-    
-    if (empty($email)) {
-        $errors['email'] = "Email is required";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors['email'] = "Invalid email format";
-    }
-    
-    if (empty($password)) {
-        $errors['password'] = "Password is required";
-    } elseif (strlen($password) < 8) {
-        $errors['password'] = "Password must be at least 8 characters";
-    } elseif (!preg_match('/[A-Z]/', $password)) {
-        $errors['password'] = "Password must contain at least one uppercase letter";
-    } elseif (!preg_match('/[a-z]/', $password)) {
-        $errors['password'] = "Password must contain at least one lowercase letter";
-    } elseif (!preg_match('/[0-9]/', $password)) {
-        $errors['password'] = "Password must contain at least one number";
-    }
-    
-    if ($password !== $confirmPassword) {
-        $errors['confirm'] = "Passwords do not match";
-    }
-    
-    // Check if email already exists
-    if (empty($errors['email'])) {
-        $checkEmail = "SELECT id FROM users WHERE email = '$email'";
-        $result = mysqli_query($conn, $checkEmail);
-        if ($result && mysqli_num_rows($result) > 0) {
-            $errors['email'] = "Email already registered";
+    // Validate CSRF token
+    if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+        $errors['general'] = "Invalid request. Please try again.";
+    } else {
+        // Get form data
+        $name = trim($_POST['name']);
+        $email = trim($_POST['email']);
+        $password = $_POST['password'];
+        $confirmPassword = $_POST['confirmPassword'];
+        
+        // Validation
+        if (empty($name)) {
+            $errors['name'] = "Name is required";
+        } elseif (strlen($name) < 2) {
+            $errors['name'] = "Name must be at least 2 characters";
+        } elseif (strlen($name) > 255) {
+            $errors['name'] = "Name must be less than 255 characters";
         }
-    }
-    
-    // Store old data for repopulation
-    $old_data = [
-        'name' => $name,
-        'email' => $email
-    ];
-    
-    // If no errors, register user
-    if (empty($errors)) {
-        // Hash the password
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         
-        // Insert into database - match your exact table structure
-        $sql = "INSERT INTO users (name, email, password_hash, is_admin) 
-                VALUES ('$name', '$email', '$hashedPassword', 0)";
+        if (empty($email)) {
+            $errors['email'] = "Email is required";
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = "Invalid email format";
+        }
         
-        if (mysqli_query($conn, $sql)) {
-            // Get the inserted user ID
-            $user_id = mysqli_insert_id($conn);
-            
-            // Set session variables
-            $_SESSION['user_id'] = $user_id;
-            $_SESSION['user_name'] = $name;
-            $_SESSION['user_email'] = $email;
-            $_SESSION['is_admin'] = 0;
-            $_SESSION['logged_in'] = true;
-            $_SESSION['login_time'] = time();
-            
-            // Create default profile record (only if table exists)
-            $profile_sql = "INSERT INTO user_profiles (user_id) VALUES ('$user_id')";
-            @mysqli_query($conn, $profile_sql); // Use @ to suppress error if table doesn't exist
-            
-            // Redirect to dashboard
-            header("Location: dashboard.php?registered=success");
-            exit();
-        } else {
-            $errors['database'] = "Registration failed. Please try again. Error: " . mysqli_error($conn);
+        if (empty($password)) {
+            $errors['password'] = "Password is required";
+        } elseif (strlen($password) < 8) {
+            $errors['password'] = "Password must be at least 8 characters";
+        } elseif (!preg_match('/[A-Z]/', $password)) {
+            $errors['password'] = "Password must contain at least one uppercase letter";
+        } elseif (!preg_match('/[a-z]/', $password)) {
+            $errors['password'] = "Password must contain at least one lowercase letter";
+        } elseif (!preg_match('/[0-9]/', $password)) {
+            $errors['password'] = "Password must contain at least one number";
+        }
+        
+        if ($password !== $confirmPassword) {
+            $errors['confirm'] = "Passwords do not match";
+        }
+        
+        // Check if email already exists (using prepared statement)
+        if (empty($errors['email'])) {
+            try {
+                $pdo = getDBConnection();
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE email = :email");
+                $stmt->execute(['email' => $email]);
+                if ($stmt->fetch()) {
+                    $errors['email'] = "Email already registered";
+                }
+            } catch (PDOException $e) {
+                error_log("Email Check Error: " . $e->getMessage());
+                $errors['general'] = "An error occurred. Please try again.";
+            }
+        }
+        
+        // Store old data for repopulation
+        $old_data = [
+            'name' => $name,
+            'email' => $email
+        ];
+        
+        // If no errors, register user
+        if (empty($errors)) {
+            try {
+                // Hash the password
+                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+                
+                // Insert into database using prepared statement
+                $pdo = getDBConnection();
+                $stmt = $pdo->prepare("INSERT INTO users (name, email, password_hash, is_admin) VALUES (:name, :email, :password, 0)");
+                $stmt->execute([
+                    'name' => $name,
+                    'email' => $email,
+                    'password' => $hashedPassword
+                ]);
+                
+                // Get the inserted user ID
+                $user_id = $pdo->lastInsertId();
+                
+                // Regenerate session to prevent fixation
+                regenerateSession();
+                
+                // Set session variables
+                $_SESSION['user_id'] = $user_id;
+                $_SESSION['user_name'] = $name;
+                $_SESSION['user_email'] = $email;
+                $_SESSION['is_admin'] = 0;
+                $_SESSION['logged_in'] = true;
+                $_SESSION['login_time'] = time();
+                
+                // Create default profile record (only if table exists)
+                try {
+                    $profileStmt = $pdo->prepare("INSERT INTO user_profiles (user_id) VALUES (:user_id)");
+                    $profileStmt->execute(['user_id' => $user_id]);
+                } catch (PDOException $e) {
+                    // Table might not exist, continue anyway
+                    error_log("Profile creation skipped: " . $e->getMessage());
+                }
+                
+                // Redirect to dashboard
+                header("Location: dashboard.php?registered=success");
+                exit();
+            } catch (PDOException $e) {
+                error_log("Registration Error: " . $e->getMessage());
+                $errors['database'] = "Registration failed. Please try again.";
+            }
         }
     }
 }
+
+// Generate CSRF token
+$csrfToken = generateCSRFToken();
 ?>
 
 
@@ -286,6 +315,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php endif; ?>
       
       <form id="registerForm" method="post" action="">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
+        
+        <?php if (isset($errors['general'])): ?>
+          <div class="alert alert-danger">
+            <?php echo htmlspecialchars($errors['general']); ?>
+          </div>
+        <?php endif; ?>
+        
+        <?php if (isset($errors['database'])): ?>
+          <div class="alert alert-danger">
+            <?php echo htmlspecialchars($errors['database']); ?>
+          </div>
+        <?php endif; ?>
+        
         <div class="form-group">
           <label class="form-label" for="name">Full name</label>
           <input type="text" 
