@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once '../config.php';
 
 // Check if admin is logged in
@@ -363,6 +362,8 @@ if (isset($_GET['edit'])) {
         <nav class="nav-links">
           <a href="index.php">Dashboard</a>
           <a href="careers.php" class="active">Careers</a>
+          <a href="courses.php">Courses</a>
+          <a href="colleges.php">Institutes</a>
           <a href="questions.php">Questions</a>
           <a href="users.php">Users</a>
         </nav>
@@ -387,6 +388,8 @@ if (isset($_GET['edit'])) {
   <nav class="mobile-nav" id="mobileNav">
     <a href="index.php">Dashboard</a>
     <a href="careers.php" class="active">Careers</a>
+    <a href="courses.php">Courses</a>
+    <a href="colleges.php">Institutes</a>
     <a href="questions.php">Questions</a>
     <a href="users.php">Users</a>
     <a href="../index.php">View Site</a>
@@ -455,15 +458,22 @@ if (isset($_GET['edit'])) {
               <a href="?edit=<?php echo $career['id']; ?>" class="btn btn-secondary">
                 Edit
               </a>
+              <a href="../career-path.php?slug=<?php echo urlencode($career['slug']); ?>" 
+                 target="_blank" 
+                 class="btn btn-outline"
+                 title="Preview career path page">
+                View
+              </a>
+              <a href="courses.php" class="btn btn-ghost" title="Manage courses for this career" style="font-size:var(--text-xs);">
+                📚 Courses
+              </a>
+              <a href="colleges.php" class="btn btn-ghost" title="Manage institutes for this career" style="font-size:var(--text-xs);">
+                🏛 Institutes
+              </a>
               <a href="?delete=<?php echo $career['id']; ?>" 
                  class="btn btn-ghost" 
                  onclick="return confirm('Are you sure you want to delete this career? This action cannot be undone.')">
                 Delete
-              </a>
-              <a href="../career-details.php?slug=<?php echo urlencode($career['slug']); ?>" 
-                 target="_blank" 
-                 class="btn btn-outline">
-                View
               </a>
             </div>
           </div>

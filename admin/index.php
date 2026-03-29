@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once '../config.php';
 
 // Check if admin is logged in
@@ -48,6 +47,23 @@ $stats['recent_users'] = $result ? mysqli_fetch_assoc($result)['total'] : 0;
 $sql = "SELECT COUNT(*) as total FROM user_tests WHERE completed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
 $result = mysqli_query($conn, $sql);
 $stats['recent_tests'] = $result ? mysqli_fetch_assoc($result)['total'] : 0;
+// Total courses (safe — table may not exist yet if migration hasn't been run)
+$stats['total_courses'] = 0;
+try {
+    $result = @mysqli_query($conn, "SELECT COUNT(*) as total FROM courses");
+    if ($result && $row = mysqli_fetch_assoc($result)) {
+        $stats['total_courses'] = (int)$row['total'];
+    }
+} catch (Exception $e) {}
+
+// Total colleges
+$stats['total_colleges'] = 0;
+try {
+    $result = @mysqli_query($conn, "SELECT COUNT(*) as total FROM colleges");
+    if ($result && $row = mysqli_fetch_assoc($result)) {
+        $stats['total_colleges'] = (int)$row['total'];
+    }
+} catch (Exception $e) {}
 ?>
 
 <!DOCTYPE html>
@@ -182,6 +198,8 @@ $stats['recent_tests'] = $result ? mysqli_fetch_assoc($result)['total'] : 0;
         <nav class="nav-links">
           <a href="index.php" class="active">Dashboard</a>
           <a href="careers.php">Careers</a>
+          <a href="courses.php">Courses</a>
+          <a href="colleges.php">Institutes</a>
           <a href="questions.php">Questions</a>
           <a href="users.php">Users</a>
         </nav>
@@ -206,6 +224,8 @@ $stats['recent_tests'] = $result ? mysqli_fetch_assoc($result)['total'] : 0;
   <nav class="mobile-nav" id="mobileNav">
     <a href="index.php" class="active">Dashboard</a>
     <a href="careers.php">Careers</a>
+    <a href="courses.php">Courses</a>
+    <a href="colleges.php">Institutes</a>
     <a href="questions.php">Questions</a>
     <a href="users.php">Users</a>
     <a href="../index.php">View Site</a>
@@ -229,25 +249,37 @@ $stats['recent_tests'] = $result ? mysqli_fetch_assoc($result)['total'] : 0;
       <div class="card stat-card">
         <div class="value"><?php echo $stats['total_users']; ?></div>
         <div class="label">Total Users</div>
-        <a href="users.php">View all users →</a>
+        <a href="users.php">View all users &rarr;</a>
       </div>
       
       <div class="card stat-card">
         <div class="value"><?php echo $stats['total_careers']; ?></div>
         <div class="label">Career Options</div>
-        <a href="careers.php">Manage careers →</a>
+        <a href="careers.php">Manage careers &rarr;</a>
+      </div>
+
+      <div class="card stat-card">
+        <div class="value"><?php echo $stats['total_courses']; ?></div>
+        <div class="label">Online Courses</div>
+        <a href="courses.php">Manage courses &rarr;</a>
+      </div>
+
+      <div class="card stat-card">
+        <div class="value"><?php echo $stats['total_colleges']; ?></div>
+        <div class="label">Institutes Listed</div>
+        <a href="colleges.php">Manage institutes &rarr;</a>
       </div>
       
       <div class="card stat-card">
         <div class="value"><?php echo $stats['total_tests']; ?></div>
         <div class="label">Tests Taken</div>
-        <a href="users.php">View results →</a>
+        <a href="users.php">View results &rarr;</a>
       </div>
       
       <div class="card stat-card">
         <div class="value"><?php echo htmlspecialchars($top_career); ?></div>
         <div class="label">Most Recommended Career</div>
-        <a href="careers.php">Manage →</a>
+        <a href="careers.php">Manage &rarr;</a>
       </div>
     </div>
 
@@ -286,27 +318,25 @@ $stats['recent_tests'] = $result ? mysqli_fetch_assoc($result)['total'] : 0;
       <h3 style="margin-bottom: var(--space-lg); color: var(--color-text-primary);">Quick Actions</h3>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-md);">
         <a href="careers.php?action=add" class="btn btn-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 8px;">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 8px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           Add New Career
         </a>
+        <a href="courses.php" class="btn btn-outline">
+          📚 Manage Courses
+        </a>
+        <a href="colleges.php" class="btn btn-outline">
+          🏛️ Manage Institutes
+        </a>
         <a href="questions.php?action=add" class="btn btn-outline">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 8px;">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 8px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           Add Assessment Question
         </a>
         <a href="users.php" class="btn btn-outline">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 8px;">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 2.5l-2.5 2.5m0 0l-2.5-2.5m2.5 2.5V14"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 8px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 2.5l-2.5 2.5m0 0l-2.5-2.5m2.5 2.5V14"/></svg>
           View All Users
         </a>
         <a href="../index.php" target="_blank" class="btn btn-ghost">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 8px;">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 8px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           Preview Site
         </a>
       </div>

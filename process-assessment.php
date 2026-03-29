@@ -1,23 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Test Results | CareerGuide</title>
-  <link rel="stylesheet" href="assets/css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    .result-page { padding: var(--space-lg); max-width: 720px; margin: 0 auto; }
-    .result-header { text-align: center; margin-bottom: var(--space-2xl); }
-    .result-header h1 { margin-bottom: var(--space-sm); }
-    .overall-score { font-size: var(--text-3xl); font-weight: 700; color: var(--color-primary); margin: var(--space-md) 0; }
-    .section-scores { margin-bottom: var(--space-xl); }
-    .section-card { padding: var(--space-lg); margin-bottom: var(--space-md); }
-    .section-card h3 { font-size: var(--text-base); margin-bottom: var(--space-sm); }
-    .section-card .progress-bar { margin-top: var(--space-sm); height: 10px; }
-    .insights { padding: var(--space-lg); margin-top: var(--space-xl); }
-    .insights h2 { margin-bottom: var(--space-md)<?php
-session_start();
+<?php
 require_once 'config.php';
 
 // Check if user is logged in

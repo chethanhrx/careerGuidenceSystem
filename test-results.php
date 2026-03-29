@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once 'config.php';
 
 // Check if user is logged in
@@ -369,7 +368,55 @@ if (!empty($user_profile['skills']) && !empty($latest_test)) {
         gap: var(--space-md);
         margin-top: var(--space-xl);
     }
-    
+
+    /* ── Career Continuation CTA styles ── */
+    .career-continue-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: var(--space-sm);
+        padding: 8px 16px;
+        border-radius: var(--radius-lg);
+        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        color: #fff;
+        font-size: var(--text-sm);
+        font-weight: 600;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        width: 100%;
+        justify-content: center;
+    }
+    .career-continue-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(37,99,235,0.35);
+        color: #fff;
+    }
+    .suggested-cta-section {
+        background: linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(124,58,237,0.08) 100%);
+        border: 1px solid rgba(37,99,235,0.2);
+        border-radius: var(--radius-xl, 1rem);
+        padding: var(--space-xl);
+        margin-bottom: var(--space-xl);
+    }
+    .suggested-cta-section h2 { margin-bottom: var(--space-sm); }
+    .suggested-career-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: var(--space-md);
+        margin-top: var(--space-lg);
+    }
+    .sug-card {
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .sug-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .sug-card-score { font-size: 1.6rem; font-weight: 800; color: var(--color-primary); margin-bottom: 4px; }
+    .sug-card-name  { font-size: var(--text-base); font-weight: 600; margin-bottom: var(--space-md); color: var(--color-text-primary); }
+
     @media (max-width: 768px) {
         .stats-grid {
             grid-template-columns: 1fr;
@@ -503,9 +550,31 @@ if (!empty($user_profile['skills']) && !empty($latest_test)) {
                         <?php else: ?>
                             <div class="score-badge low">Consider Developing Skills</div>
                         <?php endif; ?>
+                        <a href="career-path.php?slug=<?php echo urlencode($career_slug); ?>" class="career-continue-btn">
+                            🚀 Continue This Career Path
+                        </a>
                     </div>
                 <?php endforeach; ?>
             </div>
+
+            <!-- Suggested Career CTA Banner -->
+            <?php if (!empty($suggested_careers)): ?>
+            <div class="suggested-cta-section">
+                <h2>🎯 Your Top Career Matches</h2>
+                <p style="color: var(--color-text-secondary); margin-bottom: 0;">Based on your assessment, here are the careers best suited for you. Click any to get courses, institutes, and a full learning roadmap.</p>
+                <div class="suggested-career-cards">
+                    <?php foreach ($suggested_careers as $sug_career): ?>
+                    <div class="sug-card">
+                        <div class="sug-card-score"><?php echo $sug_career['score']; ?>%</div>
+                        <div class="sug-card-name"><?php echo htmlspecialchars($sug_career['title']); ?></div>
+                        <a href="career-path.php?slug=<?php echo urlencode($sug_career['slug']); ?>" class="career-continue-btn">
+                            🚀 Continue Path
+                        </a>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
             <?php endif; ?>
 
             <!-- Skill Recommendations -->

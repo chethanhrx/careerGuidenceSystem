@@ -1,5 +1,4 @@
 <?php
-session_start();
 require_once 'config.php';
 
 // Check if user is logged in
@@ -158,20 +157,6 @@ if (isset($_GET['submitted']) && $_GET['submitted'] === 'true' && isset($_SESSIO
     $test_results = $_SESSION['last_test_results'];
     $overall_score = $test_results['overall_score'] ?? 0;
     $insights = $test_results['insights'] ?? [];
-    
-    // Get suggested careers from results
-    if (isset($test_results['suggested_careers'])) {
-        $suggested_careers = [];
-        foreach ($test_results['suggested_careers'] as $career_slug) {
-            $sql_career = "SELECT * FROM careers WHERE slug = '$career_slug'";
-            $result_career = mysqli_query($conn, $sql_career);
-            if ($result_career && mysqli_num_rows($result_career) > 0) {
-                $career_data = mysqli_fetch_assoc($result_career);
-                $career_data['score'] = $test_results['scores'][$career_slug] ?? 0;
-                $suggested_careers[] = $career_data;
-            }
-        }
-    }
 }
 
 // Check for existing test results in session (for page refresh)
@@ -182,20 +167,33 @@ if (!$test_submitted && isset($_SESSION['last_test_results'])) {
         $test_results = $_SESSION['last_test_results'];
         $overall_score = $test_results['overall_score'] ?? 0;
         $insights = $test_results['insights'] ?? [];
-        
-        // Get suggested careers from results
-        if (isset($test_results['suggested_careers'])) {
-            $suggested_careers = [];
-            foreach ($test_results['suggested_careers'] as $career_slug) {
-                $sql_career = "SELECT * FROM careers WHERE slug = '$career_slug'";
-                $result_career = mysqli_query($conn, $sql_career);
-                if ($result_career && mysqli_num_rows($result_career) > 0) {
-                    $career_data = mysqli_fetch_assoc($result_career);
-                    $career_data['score'] = $test_results['scores'][$career_slug] ?? 0;
-                    $suggested_careers[] = $career_data;
-                }
-            }
+    }
+}
+
+// Helper to fetch suggested careers and top courses
+$top_courses = [];
+if ($test_submitted && isset($test_results['suggested_careers'])) {
+    $suggested_careers = [];
+    $top_career_id = null;
+    foreach ($test_results['suggested_careers'] as $career_slug) {
+        $sql_career = "SELECT * FROM careers WHERE slug = '$career_slug'";
+        $result_career = mysqli_query($conn, $sql_career);
+        if ($result_career && mysqli_num_rows($result_career) > 0) {
+            $career_data = mysqli_fetch_assoc($result_career);
+            $career_data['score'] = $test_results['scores'][$career_slug] ?? 0;
+            $suggested_careers[] = $career_data;
+            if (!$top_career_id) $top_career_id = $career_data['id'];
         }
+    }
+    
+    // Fetch top 3 courses for the #1 career
+    if ($top_career_id) {
+        try {
+            $c_res = @mysqli_query($conn, "SELECT * FROM courses WHERE career_id = $top_career_id ORDER BY is_free DESC LIMIT 3");
+            if ($c_res) {
+                while($c = mysqli_fetch_assoc($c_res)) $top_courses[] = $c;
+            }
+        } catch (Exception $e) {}
     }
 }
 
@@ -255,9 +253,9 @@ if (!$test_submitted) {
     .result-page { padding: var(--space-lg); max-width: 720px; margin: 0 auto; }
     .result-header { text-align: center; margin-bottom: var(--space-2xl); }
     .overall-score { font-size: 48px; font-weight: 700; color: var(--color-primary); margin: var(--space-md) 0; }
-    .section-scores { margin-bottom: var(--space-xl); }
-    .section-card { padding: var(--space-lg); margin-bottom: var(--space-md); }
-    .section-card h3 { font-size: var(--text-base); margin-bottom: var(--space-sm); }
+    .section-scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-xl); }
+    .section-card { padding: var(--space-lg); margin-bottom: 0; }
+    .section-card h3 { font-size: var(--text-base); margin-bottom: var(--space-sm); color: var(--color-text-primary); }
     .section-card .progress-bar { margin-top: var(--space-sm); height: 10px; }
     .insights { padding: var(--space-lg); margin-top: var(--space-xl); }
     .insights h2 { margin-bottom: var(--space-md); }
@@ -278,10 +276,19 @@ if (!$test_submitted) {
     
     /* Additional result styles */
     .career-matches-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-md); margin-top: var(--space-md); }
-    .career-match { background: var(--color-bg-light); padding: var(--space-lg); border-radius: var(--radius-lg); border: 1px solid var(--color-border); }
-    .career-match h4 { margin: 0 0 var(--space-sm) 0; font-size: var(--text-base); }
-    .match-percentage { font-size: 24px; font-weight: 600; color: var(--color-primary); }
+    .career-match { background: var(--color-bg); padding: var(--space-lg); border-radius: var(--radius-lg); border: 1px solid var(--color-border); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
+    .career-match:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .career-match h4 { margin: 0 0 var(--space-xs) 0; font-size: var(--text-base); color: var(--color-text-primary); }
+    .match-percentage { font-size: 28px; font-weight: 800; color: var(--color-primary); }
     .progress-label { display: flex; justify-content: space-between; margin-top: var(--space-xs); font-size: var(--text-sm); color: var(--color-text-secondary); }
+    .career-continue-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: auto; padding: 10px 16px; border-radius: var(--radius-lg); background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); color: #fff; font-size: var(--text-sm); font-weight: 600; text-decoration: none; transition: transform 0.2s; }
+    .career-continue-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37,99,235,0.35); color: #fff; }
+
+    /* Course styles in results */
+    .mini-course-list { display: grid; gap: var(--space-md); margin-top: var(--space-md); }
+    .mini-course-card { padding: var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-light); display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); }
+    .mini-course-card h5 { margin: 0; font-size: var(--text-base); color: var(--color-text-primary); }
+    .mini-course-meta { font-size: var(--text-sm); color: var(--color-text-secondary); margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -395,21 +402,48 @@ if (!$test_submitted) {
                   <span>Match Score</span>
                   <span><?php echo ($career['score'] ?? 0); ?>%</span>
                 </div>
-                <p style="margin-top: var(--space-sm); font-size: var(--text-sm); color: var(--color-text-secondary); line-height: 1.4;">
-                  <?php echo htmlspecialchars(substr($career['overview'] ?? 'No description available', 0, 120)); ?>...
+                <p style="margin-top: var(--space-sm); margin-bottom: var(--space-lg); font-size: var(--text-sm); color: var(--color-text-secondary); line-height: 1.4;">
+                  <?php echo htmlspecialchars(substr($career['overview'] ?? 'No description available', 0, 100)); ?>...
                 </p>
-                <a href="career-details.php?slug=<?php echo $career['slug']; ?>" class="btn btn-outline" style="margin-top: var(--space-sm); display: inline-block;">
-                  Learn More
+                <a href="career-path.php?slug=<?php echo urlencode($career['slug']); ?>" class="career-continue-btn">
+                  🚀 Continue This Path
                 </a>
               </div>
             <?php endforeach; ?>
           </div>
         </div>
+
+        <?php if (!empty($top_courses)): ?>
+        <div class="career-matches" style="margin-top: var(--space-xl); background: var(--color-bg-light); padding: var(--space-lg); border-radius: var(--radius-lg);">
+          <h2 style="margin-bottom: var(--space-xs);">📚 Recommended Courses for You</h2>
+          <p class="text-muted" style="margin-bottom: var(--space-md); font-size: var(--text-sm);">Based on your #1 career match, we suggest starting with these courses:</p>
+          <div class="mini-course-list">
+            <?php foreach($top_courses as $course): ?>
+              <div class="mini-course-card">
+                <div style="flex:1;">
+                  <h5><?php echo htmlspecialchars($course['title']); ?></h5>
+                  <div class="mini-course-meta">
+                    <span style="display:inline-block; margin-right:8px; padding:2px 8px; background:rgba(37,99,235,0.1); color:#2563eb; border-radius:4px; font-size:12px; font-weight:600;">
+                      <?php echo htmlspecialchars($course['platform']); ?>
+                    </span>
+                    <?php echo $course['is_free'] ? '<span style="color:var(--color-success);">Free</span>' : 'Paid'; ?>
+                    <?php if($course['duration']) echo " • " . htmlspecialchars($course['duration']); ?>
+                  </div>
+                </div>
+                <a href="<?php echo htmlspecialchars($course['url']); ?>" target="_blank" class="btn btn-outline btn-sm" style="white-space:nowrap;">View Course</a>
+              </div>
+            <?php endforeach; ?>
+          </div>
+          <div style="text-align:center; margin-top: var(--space-md);">
+             <a href="career-path.php?slug=<?php echo urlencode($suggested_careers[0]['slug']); ?>#courses" class="btn btn-ghost" style="color:var(--color-primary);">See all courses &rarr;</a>
+          </div>
+        </div>
+        <?php endif; ?>
       <?php endif; ?>
 
       <?php if (isset($test_results['scores']) && is_array($test_results['scores'])): ?>
         <div class="section-scores">
-          <h2 style="margin-bottom: var(--space-lg);">Detailed Career Scores</h2>
+          <h2 style="margin-bottom: var(--space-lg); grid-column: 1 / -1; color: var(--color-text-primary);">Detailed Career Scores</h2>
           <?php foreach ($test_results['scores'] as $career_slug => $score): 
             $career_name = ucwords(str_replace('-', ' ', $career_slug));
           ?>
