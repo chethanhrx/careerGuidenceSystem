@@ -427,6 +427,7 @@ try {
           <a href="profile-setup.php">Profile</a>
           <a href="assessment.php">Assessment</a>
           <a href="career-details.php">Careers</a>
+          <a href="recommendations.php">References</a>
           <a href="test-results.php">Results</a>
         </nav>
       </div>
@@ -448,6 +449,7 @@ try {
     <a href="profile-setup.php">Profile</a>
     <a href="assessment.php">Take Assessment</a>
     <a href="career-details.php">Careers</a>
+    <a href="recommendations.php">References</a>
     <a href="test-results.php">Results</a>
     <a href="./logout.php">Logout</a>
   </nav>
@@ -463,6 +465,7 @@ try {
         <li><a href="test-results.php">Results</a></li>
         <li><a href="assessment.php">Take Assessment</a></li>
         <li><a href="career-details.php">Careers</a></li>
+        <li><a href="recommendations.php">References</a></li>
         <li><a href="./logout.php">Logout</a></li>
       </ul>
     </aside>

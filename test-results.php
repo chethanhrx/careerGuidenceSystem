@@ -528,54 +528,40 @@ if (!empty($user_profile['skills']) && !empty($latest_test)) {
     </div>
 </div>
 
-            <!-- Latest Test Scores -->
-            <?php if (!empty($career_scores)): ?>
-            <div class="career-scores">
-                <?php foreach ($career_scores as $career_slug => $score): 
-                    $career_name = ucwords(str_replace('-', ' ', $career_slug));
-                ?>
-                    <div class="career-score-card">
-                        <h3><?php echo $career_name; ?></h3>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: <?php echo $score; ?>%;"></div>
-                        </div>
-                        <div class="progress-label">
-                            <span>Compatibility Score</span>
-                            <span><?php echo $score; ?>%</span>
-                        </div>
-                        <?php if ($score >= 80): ?>
-                            <div class="score-badge high">Excellent Match</div>
-                        <?php elseif ($score >= 60): ?>
-                            <div class="score-badge medium">Good Match</div>
-                        <?php else: ?>
-                            <div class="score-badge low">Consider Developing Skills</div>
-                        <?php endif; ?>
-                        <a href="career-path.php?slug=<?php echo urlencode($career_slug); ?>" class="career-continue-btn">
-                            🚀 Continue This Career Path
-                        </a>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-
-            <!-- Suggested Career CTA Banner -->
-            <?php if (!empty($suggested_careers)): ?>
+            <!-- Consolidated Career Compatibility Analysis -->
             <div class="suggested-cta-section">
                 <h2>🎯 Your Top Career Matches</h2>
-                <p style="color: var(--color-text-secondary); margin-bottom: 0;">Based on your assessment, here are the careers best suited for you. Click any to get courses, institutes, and a full learning roadmap.</p>
-                <div class="suggested-career-cards">
-                    <?php foreach ($suggested_careers as $sug_career): ?>
-                    <div class="sug-card">
-                        <div class="sug-card-score"><?php echo $sug_career['score']; ?>%</div>
-                        <div class="sug-card-name"><?php echo htmlspecialchars($sug_career['title']); ?></div>
-                        <a href="career-path.php?slug=<?php echo urlencode($sug_career['slug']); ?>" class="career-continue-btn">
-                            🚀 Continue Path
-                        </a>
-                    </div>
+                <p style="color: var(--color-text-secondary); margin-bottom: 20px;">Based on your assessment, these careers align best with your profile. Click 'View Roadmap' to see details, or 'Get References' for specific courses and colleges.</p>
+                
+                <div class="career-scores">
+                    <?php foreach ($suggested_careers as $sug_career): 
+                        $score = $sug_career['score'];
+                    ?>
+                        <div class="career-score-card">
+                            <div class="sug-card-score"><?php echo $score; ?>%</div>
+                            <h3><?php echo htmlspecialchars($sug_career['title']); ?></h3>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: <?php echo $score; ?>%;"></div>
+                            </div>
+                            <div class="progress-label" style="margin-bottom: 15px;">
+                                <span>Compatibility</span>
+                                <span><?php echo $score; ?>%</span>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <a href="career-path.php?slug=<?php echo urlencode($sug_career['slug']); ?>" class="career-continue-btn">
+                                    🗺️ View Detailed Roadmap
+                                </a>
+                                <?php if ($sug_career['slug'] === $suggested_careers[0]['slug']): ?>
+                                <a href="recommendations.php" class="btn btn-outline" style="width: 100%; justify-content: center; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-lg); font-size: var(--text-sm); font-weight: 600;">
+                                    📚 Get Learning References
+                                </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     <?php endforeach; ?>
                 </div>
             </div>
-            <?php endif; ?>
-            <?php endif; ?>
 
             <!-- Skill Recommendations -->
             <?php if (!empty($skill_recommendations)): ?>

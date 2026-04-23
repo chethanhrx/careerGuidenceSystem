@@ -315,6 +315,7 @@ if (!$test_submitted) {
           <a href="profile-setup.php">Profile</a>
           <a href="assessment.php" class="active">Assessment</a>
           <a href="career-details.php">Careers</a>
+          <a href="recommendations.php">References</a>
           <a href="test-results.php">Results</a>
         </nav>
       </div>
@@ -334,6 +335,7 @@ if (!$test_submitted) {
     <a href="profile-setup.php">Profile</a>
     <a href="assessment.php" class="active">Assessment</a>
     <a href="career-details.php">Careers</a>
+    <a href="recommendations.php">References</a>
     <a href="test-results.php">Results</a>
     <a href="./logout.php">Logout</a>
   </nav>

@@ -67,6 +67,14 @@ while ($row = $saved_result->fetch_assoc()) {
 }
 $saved_stmt->close();
 
+// Check if THIS career is saved
+$is_career_saved = false;
+$saved_career_stmt = $conn->prepare("SELECT id FROM user_careers WHERE user_id = ? AND career_id = ?");
+$saved_career_stmt->bind_param("ii", $user_id, $career_id);
+$saved_career_stmt->execute();
+$is_career_saved = $saved_career_stmt->get_result()->num_rows > 0;
+$saved_career_stmt->close();
+
 // Get user's match score for this career from latest test
 $match_score = 0;
 $score_stmt = $conn->prepare("SELECT results FROM user_tests WHERE user_id = ? AND test_type = 'career_assessment' ORDER BY completed_at DESC LIMIT 1");
@@ -422,11 +430,18 @@ foreach ($career_roadmap as $i => $step) {
           </div>
         </div>
         <?php if ($match_score > 0): ?>
-        <div class="cp-match-ring" title="<?php echo $match_score; ?>% career match">
-          <div class="cp-match-ring-inner">
-            <div class="cp-match-ring-pct"><?php echo $match_score; ?>%</div>
-            <div class="cp-match-ring-lbl">Match</div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+          <div class="cp-match-ring" title="<?php echo $match_score; ?>% career match">
+            <div class="cp-match-ring-inner">
+              <div class="cp-match-ring-pct"><?php echo $match_score; ?>%</div>
+              <div class="cp-match-ring-lbl">Match</div>
+            </div>
           </div>
+          <button class="btn <?php echo $is_career_saved ? 'btn-secondary' : 'btn-outline'; ?>" 
+                  onclick="toggleSave(this, 'career', <?php echo $career_id; ?>)"
+                  style="width: 100%; justify-content: center; display: inline-flex; align-items: center; gap: 8px; font-weight: 700;">
+            <?php echo $is_career_saved ? '❤️ Saved' : '🤍 Save Career'; ?>
+          </button>
         </div>
         <?php endif; ?>
       </div>
