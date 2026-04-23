@@ -453,6 +453,7 @@ if (!empty($user_profile['skills']) && !empty($latest_test)) {
                     <a href="dashboard.php">Dashboard</a>
                     <a href="profile-setup.php">Profile</a>
                     <a href="assessment.php">Assessment</a>
+                    <a href="recommendations.php">References</a>
                     <a href="test-results.php" class="active">Results</a>
                     <a href="careers.php">Careers</a>
                 </nav>
@@ -478,6 +479,7 @@ if (!empty($user_profile['skills']) && !empty($latest_test)) {
         <a href="dashboard.php">Dashboard</a>
         <a href="profile-setup.php">Profile</a>
         <a href="assessment.php">Assessment</a>
+        <a href="recommendations.php">References</a>
         <a href="test-results.php" class="active">Results</a>
         <a href="careers.php">Careers</a>
         <a href="./logout.php">Logout</a>

@@ -372,8 +372,9 @@ foreach ($career_roadmap as $i => $step) {
           <a href="dashboard.php">Dashboard</a>
           <a href="profile-setup.php">Profile</a>
           <a href="assessment.php">Assessment</a>
-          <a href="test-results.php">Results</a>
           <a href="career-details.php">Careers</a>
+          <a href="recommendations.php">References</a>
+          <a href="test-results.php">Results</a>
         </nav>
       </div>
       <div class="nav-actions">
@@ -394,8 +395,9 @@ foreach ($career_roadmap as $i => $step) {
     <a href="dashboard.php">Dashboard</a>
     <a href="profile-setup.php">Profile</a>
     <a href="assessment.php">Assessment</a>
-    <a href="test-results.php">Results</a>
     <a href="career-details.php">Careers</a>
+    <a href="recommendations.php">References</a>
+    <a href="test-results.php">Results</a>
     <a href="./logout.php">Logout</a>
   </nav>
 
